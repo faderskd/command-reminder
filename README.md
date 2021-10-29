@@ -32,6 +32,5 @@ pip install command-reminder
 # Configuration
 ```editorconfig
 [REPOSITORY]
-Url = git@github.com:faderskd/command-reminder.git
-Path = ~/.command-reminder
+ConfigDir = ~/.command-reminder
 ``` 

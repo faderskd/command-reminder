@@ -2,31 +2,32 @@ import sys
 import argparse
 from argparse import ArgumentParser
 
-from command_reminder.cli.initializer import compound_processor
-from command_reminder.cmd_processors.dto import InitOperationDto
+from command_reminder.operations.dto import InitOperationDataDto
+from command_reminder.config.config import DEFAULT_REPOSITORY_REPO
 
-DEFAULT_REPOSITORY_REPO = '~/.command-reminder/repository'
+from command_reminder.cli.initializer import AppContext
 
 
 class Operations:
     INIT = "init"
 
 
-def get_compound_processor():
-    return compound_processor
-
-
 def parse_args(raw_args) -> None:
+    app_context = AppContext()
+    parser = define_parser()
+    args = parser.parse_args(raw_args)
+    operation = args.operation
+
+    if operation == Operations.INIT:
+        app_context.compound_processor.process(InitOperationDataDto(args.repo, app_context.config.path))
+
+
+def define_parser():
     parser = argparse.ArgumentParser(description='Command Reminder CLI')
     subparsers = parser.add_subparsers(help="Command Reminder command to execute", dest="operation")
     init_parser = subparsers.add_parser(Operations.INIT, description="Initializes command-reminder project")
     _parse_init_subparser(init_parser)
-    args = parser.parse_args(raw_args)
-
-    operation = args.operation
-
-    if operation == Operations.INIT:
-        get_compound_processor().process(InitOperationDto(args.repo))
+    return parser
 
 
 def _parse_init_subparser(parser: ArgumentParser) -> None:

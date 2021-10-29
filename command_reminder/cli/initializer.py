@@ -1,6 +1,11 @@
-from command_reminder.cmd_processors import processors
+from command_reminder.operations import processors
+from command_reminder.config.config import Configuration
 
-init_processor = processors.InitRepositoryProcessor()
-compound_processor = processors.CompoundProcessor([
-    init_processor
-])
+
+class AppContext:
+    def __init__(self):
+        self.config = Configuration.load_config()
+        self.init_processor = processors.InitRepositoryProcessor()
+        self.compound_processor = processors.CompoundProcessor([
+            self.init_processor
+        ])
