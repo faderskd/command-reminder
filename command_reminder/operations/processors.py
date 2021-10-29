@@ -35,7 +35,7 @@ class InitRepositoryProcessor(Processor):
     @staticmethod
     def _init_git_repo(directory, repo):
         result = subprocess.run([f'cd {directory} && git init && git remote add origin {repo}'],
-                                   shell=True, check=True)
+                                shell=True, check=True)
 
 
 class CompoundProcessor:
