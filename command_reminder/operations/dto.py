@@ -6,12 +6,23 @@ class OperationData: ...
 
 
 @dataclass
-class InitOperationDataDto(OperationData):
+class InitOperationDto(OperationData):
     repo: str
 
 
 @dataclass
-class RecordCommandOperationDataDto(OperationData):
+class RecordCommandOperationDto(OperationData):
     command: str
     name: str
     tags: typing.List[str]
+
+
+@dataclass
+class ListOperationDto(OperationData):
+    tags: typing.List[str]
+
+
+@dataclass
+class FoundCommandsDto:
+    command: str
+    name: str

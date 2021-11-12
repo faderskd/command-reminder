@@ -7,7 +7,9 @@ class AppContext:
         self.config = Configuration.load_config()
         self.init_processor = processors.InitRepositoryProcessor(self.config)
         self.record_processor = processors.RecordCommandProcessor(self.config)
+        self.list_processor = processors.ListCommandsProcessor(self.config)
         self.compound_processor = processors.CompoundProcessor([
             self.init_processor,
-            self.record_processor
+            self.record_processor,
+            self.list_processor
         ])

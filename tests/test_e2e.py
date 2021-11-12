@@ -93,12 +93,51 @@ class CliRecordTestCase(BaseTestCase):
         parser.parse_args(['init'])
 
         # when
-        parser.parse_args(['record', '--name', 'mongo_login', '--command', 'mongo dburl/dbname --username abc --password pass'])
+        parser.parse_args(
+            ['record', '--name', 'mongo_login', '--command', 'mongo dburl/dbname --username abc --password pass'])
 
         # then
         self.assertTrue(os.path.exists(os.path.join(os.environ[COMMAND_REMINDER_DIR_ENV],
                                                     REPOSITORIES_DIR, MAIN_REPOSITORY_DIR, COMMANDS_FILE_NAME)))
 
-        # with assert_stdout() as stdout:
-        #     parser.parse_args(['commands'])
-        #     self.assertIn('mongo dburl/dbname --username abc --password pass', stdout.output)
+        with assert_stdout() as stdout:
+            parser.parse_args(['list'])
+            self.assertIn('mongo_login: mongo dburl/dbname --username abc --password pass', stdout.output)
+
+    def test_should_filter_commands_by_tags(self):
+        # given
+        parser.parse_args(['init'])
+
+        parser.parse_args(['record', '--name', 'mongo', '--command', 'mongo', '--tags', '#onduty #mongo'])
+        parser.parse_args(['record', '--name', 'cassandra', '--command', 'cassandra', '--tags', '#onduty #cassandra'])
+
+        # when
+        with assert_stdout() as stdout:
+            parser.parse_args(['list', '--tags', '#onduty'])
+            self.assertEqual(len(stdout.output), 2)
+            self.assertIn('mongo: mongo', stdout.output)
+            self.assertIn('cassandra: cassandra', stdout.output)
+
+        # when
+        with assert_stdout() as stdout:
+            parser.parse_args(['list', '--tags', '#mongo'])
+            self.assertEqual(len(stdout.output), 1)
+            self.assertIn('mongo: mongo', stdout.output)
+
+    def test_allow_use_tags_with_comma(self):
+        # given
+        parser.parse_args(['init'])
+
+        parser.parse_args(['record', '--name', 'mongo', '--command', 'mongo', '--tags', '#onduty,#mongo'])
+
+        # when
+        with assert_stdout() as stdout:
+            parser.parse_args(['list', '--tags', '#onduty'])
+            self.assertEqual(len(stdout.output), 1)
+            self.assertIn('mongo: mongo', stdout.output)
+
+        # when
+        with assert_stdout() as stdout:
+            parser.parse_args(['list', '--tags', '#onduty,        #mongo'])
+            self.assertEqual(len(stdout.output), 1)
+            self.assertIn('mongo: mongo', stdout.output)
