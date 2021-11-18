@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 import giturlparse
 
 from command_reminder.common import InvalidArgumentException
-from command_reminder.config.config import Configuration
+from command_reminder.config.config import Configuration, FISH_FUNCTIONS_PATH_ENV
 from command_reminder.operations.dto import OperationData, InitOperationDto, RecordCommandOperationDto, \
     ListOperationDto, FoundCommandsDto
 
@@ -27,7 +27,7 @@ class Processor(ABC):
         pass
 
     @staticmethod
-    def _create_dir(path) -> None:
+    def _create_dir(path: str) -> None:
         if not os.path.exists(path):
             os.makedirs(path)
 
@@ -49,7 +49,7 @@ class InitRepositoryProcessor(Processor):
             raise InvalidArgumentException("Invalid git repository url")
 
     @staticmethod
-    def _init_git_repo(directory, repo):
+    def _init_git_repo(directory: str, repo: str):
         if repo:
             subprocess.run([f'cd {directory} && git init && git remote add origin {repo}'],
                            shell=True, check=True)
@@ -63,7 +63,10 @@ class RecordCommandProcessor(Processor):
         if not isinstance(data, RecordCommandOperationDto):
             return
         self._create_dir(self._config.main_repository_dir)
+        self._create_dir(self._config.main_repository_fish_functions)
         self._append_command(data)
+        self._create_fish_function(data)
+        self._add_functions_dir_to_search_path()
 
     def _append_command(self, data: RecordCommandOperationDto) -> None:
         flags = 'w+'
@@ -75,6 +78,22 @@ class RecordCommandProcessor(Processor):
             commands[data.name] = (data.command, data.tags)
             json.dump(commands, f)
             f.truncate()
+
+    def _create_fish_function(self, data: RecordCommandOperationDto) -> None:
+        fish_func_file = os.path.join(self._config.main_repository_fish_functions, data.name + '.fish')
+        if os.path.exists(fish_func_file):
+            return
+        with open(fish_func_file, 'w+') as f:
+            f.write(f'''
+            function {data.name}
+                echo '{data.command}'
+            end
+            ''')
+
+    def _add_functions_dir_to_search_path(self) -> None:
+        current_path = os.getenv(FISH_FUNCTIONS_PATH_ENV)
+        if not current_path or self._config.main_repository_fish_functions not in current_path:
+            os.environ[FISH_FUNCTIONS_PATH_ENV] = f'{current_path} {self._config.main_repository_fish_functions}'
 
 
 class ListCommandsProcessor(Processor):

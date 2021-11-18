@@ -4,12 +4,15 @@ from dataclasses import dataclass
 from command_reminder.common import InvalidArgumentException
 
 COMMAND_REMINDER_DIR_ENV = "COMMAND_REMINDER_DIR"
+FISH_FUNCTIONS_PATH_ENV = 'fish_function_path'
 HOME_DIR_ENV = "HOME"
+
 DEFAULT_REPOSITORY_DIR = '.command-reminder'
 REPOSITORIES_DIR = 'repositories'
 MAIN_REPOSITORY_DIR = 'main'
 COMMANDS_FILE_NAME = 'commands.json'
 EXTENSIONS_REPOSITORY_DIR = 'extensions'
+FISH_FUNCTIONS_DIR = 'fish'
 
 
 @dataclass
@@ -40,6 +43,10 @@ class Configuration:
     @property
     def main_repository_commands_file(self) -> str:
         return os.path.join(self.main_repository_dir, COMMANDS_FILE_NAME)
+
+    @property
+    def main_repository_fish_functions(self) -> str:
+        return os.path.join(self.main_repository_dir, FISH_FUNCTIONS_DIR)
 
     @staticmethod
     def _validate(home: str):

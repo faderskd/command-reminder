@@ -6,10 +6,9 @@ from unittest import mock
 
 from command_reminder.cli import parser
 from command_reminder.config.config import COMMAND_REMINDER_DIR_ENV, HOME_DIR_ENV, REPOSITORIES_DIR, \
-    MAIN_REPOSITORY_DIR, COMMANDS_FILE_NAME
+    MAIN_REPOSITORY_DIR, COMMANDS_FILE_NAME, FISH_FUNCTIONS_DIR, FISH_FUNCTIONS_PATH_ENV
 from command_reminder.operations.processors import InvalidArgumentException
-
-TEST_PATH = os.path.join(os.getcwd(), 'tmp')
+from tests.helpers import with_mocked_environment, TEST_PATH
 
 
 class StdoutRedirectionContext:
@@ -49,7 +48,7 @@ class BaseTestCase(unittest.TestCase):
         return os.path.join(os.environ[COMMAND_REMINDER_DIR_ENV], REPOSITORIES_DIR)
 
 
-@mock.patch.dict('os.environ', {COMMAND_REMINDER_DIR_ENV: TEST_PATH})
+@with_mocked_environment
 class CliInitTestCase(BaseTestCase):
 
     def test_should_init_repository(self):
@@ -86,7 +85,7 @@ class CliInitTestCase(BaseTestCase):
             self.assertFalse(os.path.exists(os.environ[COMMAND_REMINDER_DIR_ENV]))
 
 
-@mock.patch.dict('os.environ', {COMMAND_REMINDER_DIR_ENV: TEST_PATH})
+@with_mocked_environment
 class CliRecordTestCase(BaseTestCase):
     def test_should_record_command(self):
         # given
@@ -104,6 +103,50 @@ class CliRecordTestCase(BaseTestCase):
             parser.parse_args(['list'])
             self.assertIn('mongo_login: mongo dburl/dbname --username abc --password pass', stdout.output)
 
+    def test_should_create_fish_function_and_add_it_to_search_path(self):
+        # given
+        parser.parse_args(['init'])
+
+        # when
+        parser.parse_args(
+            ['record', '--name', 'mongo_login', '--command', 'mongo dburl/dbname --username abc --password pass'])
+
+        # then
+        function_file = os.path.join(os.environ[COMMAND_REMINDER_DIR_ENV], REPOSITORIES_DIR, MAIN_REPOSITORY_DIR,
+                                     FISH_FUNCTIONS_DIR, 'mongo_login.fish')
+        self.assertTrue(os.path.exists(function_file))
+
+        # and
+        with open(function_file, 'r') as f:
+            content = ''.join([line for line in f.readlines()])
+            self.assertEqual(content, '''
+            function mongo_login
+                echo 'mongo dburl/dbname --username abc --password pass'
+            end
+            ''')
+
+        # and
+        self.assertEqual(os.environ.get(FISH_FUNCTIONS_PATH_ENV),
+                         f'/some/path {TEST_PATH}/{REPOSITORIES_DIR}/{MAIN_REPOSITORY_DIR}/{FISH_FUNCTIONS_DIR}')
+
+    def test_should_add_functions_directory_to_search_path_only_once(self):
+        # given
+        parser.parse_args(['init'])
+
+        # when
+        parser.parse_args(
+            ['record', '--name', 'mongo_login', '--command', 'mongo dburl/dbname --username abc --password pass'])
+
+        parser.parse_args(
+            ['record', '--name', 'curl_server', '--command', 'curl http://some.domain.com'])
+
+        # then
+        self.assertEqual(os.environ.get(FISH_FUNCTIONS_PATH_ENV),
+                         f'/some/path {TEST_PATH}/{REPOSITORIES_DIR}/{MAIN_REPOSITORY_DIR}/{FISH_FUNCTIONS_DIR}')
+
+
+@with_mocked_environment
+class CliListTestCase(BaseTestCase):
     def test_should_filter_commands_by_tags(self):
         # given
         parser.parse_args(['init'])
@@ -130,14 +173,18 @@ class CliRecordTestCase(BaseTestCase):
 
         parser.parse_args(['record', '--name', 'mongo', '--command', 'mongo', '--tags', '#onduty,#mongo'])
 
-        # when
         with assert_stdout() as stdout:
+            # when
             parser.parse_args(['list', '--tags', '#onduty'])
+
+            # then
             self.assertEqual(len(stdout.output), 1)
             self.assertIn('mongo: mongo', stdout.output)
 
-        # when
         with assert_stdout() as stdout:
+            # when
             parser.parse_args(['list', '--tags', '#onduty,        #mongo'])
+
+            # then
             self.assertEqual(len(stdout.output), 1)
             self.assertIn('mongo: mongo', stdout.output)
