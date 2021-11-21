@@ -43,29 +43,43 @@ class BaseTestCase(unittest.TestCase):
         except:
             pass
 
-    @staticmethod
-    def build_repositories_path() -> str:
-        return os.path.join(os.environ[COMMAND_REMINDER_DIR_ENV], REPOSITORIES_DIR)
-
 
 @with_mocked_environment
 class CliInitTestCase(BaseTestCase):
 
-    def test_should_init_repository(self):
+    def test_should_init_empty_github_repository(self):
         # when
         parser.parse_args(['init', '--repo', 'git@github.com:faderskd/command-reminder.git'])
 
         # then
-        self.assertTrue(os.path.exists(BaseTestCase.build_repositories_path()))
+        self.assertTrue(os.path.exists(f'/{TEST_PATH}/{REPOSITORIES_DIR}/{MAIN_REPOSITORY_DIR}/{FISH_FUNCTIONS_DIR}'))
         self.assertTrue(os.path.exists(os.path.join(os.environ[COMMAND_REMINDER_DIR_ENV], ".git")))
 
-    def test_should_init_directory_without_repository_given(self):
+    def test_should_init_directory_without_github_repository_given(self):
         # when
         parser.parse_args(['init'])
 
         # then
-        self.assertTrue(os.path.exists(BaseTestCase.build_repositories_path()))
+        self.assertTrue(os.path.exists(f'/{TEST_PATH}/{REPOSITORIES_DIR}/{MAIN_REPOSITORY_DIR}/{FISH_FUNCTIONS_DIR}'))
         self.assertFalse(os.path.exists(os.path.join(os.environ[COMMAND_REMINDER_DIR_ENV], ".git")))
+
+    def test_should_add_fish_functions_main_directory_to_search_path_if_needed(self):
+        # given
+        self.assertEquals(os.environ.get(FISH_FUNCTIONS_PATH_ENV), '/some/path')
+
+        # when
+        parser.parse_args(['init'])
+
+        # then
+        self.assertEquals(os.environ.get(FISH_FUNCTIONS_PATH_ENV),
+                          f'/some/path {TEST_PATH}/{REPOSITORIES_DIR}/{MAIN_REPOSITORY_DIR}/{FISH_FUNCTIONS_DIR}')
+
+        # when
+        parser.parse_args(['init'])
+
+        # then
+        self.assertEquals(os.environ.get(FISH_FUNCTIONS_PATH_ENV),
+                          f'/some/path {TEST_PATH}/{REPOSITORIES_DIR}/{MAIN_REPOSITORY_DIR}/{FISH_FUNCTIONS_DIR}')
 
     @mock.patch.dict('os.environ', {COMMAND_REMINDER_DIR_ENV: TEST_PATH, HOME_DIR_ENV: ""})
     def test_should_throw_error_when_home_env_is_not_set(self):
@@ -103,7 +117,7 @@ class CliRecordTestCase(BaseTestCase):
             parser.parse_args(['list'])
             self.assertIn('mongo_login: mongo dburl/dbname --username abc --password pass', stdout.output)
 
-    def test_should_create_fish_function_and_add_it_to_search_path(self):
+    def test_should_create_fish_function(self):
         # given
         parser.parse_args(['init'])
 
@@ -124,25 +138,6 @@ class CliRecordTestCase(BaseTestCase):
                 echo 'mongo dburl/dbname --username abc --password pass'
             end
             ''')
-
-        # and
-        self.assertEqual(os.environ.get(FISH_FUNCTIONS_PATH_ENV),
-                         f'/some/path {TEST_PATH}/{REPOSITORIES_DIR}/{MAIN_REPOSITORY_DIR}/{FISH_FUNCTIONS_DIR}')
-
-    def test_should_add_functions_directory_to_search_path_only_once(self):
-        # given
-        parser.parse_args(['init'])
-
-        # when
-        parser.parse_args(
-            ['record', '--name', 'mongo_login', '--command', 'mongo dburl/dbname --username abc --password pass'])
-
-        parser.parse_args(
-            ['record', '--name', 'curl_server', '--command', 'curl http://some.domain.com'])
-
-        # then
-        self.assertEqual(os.environ.get(FISH_FUNCTIONS_PATH_ENV),
-                         f'/some/path {TEST_PATH}/{REPOSITORIES_DIR}/{MAIN_REPOSITORY_DIR}/{FISH_FUNCTIONS_DIR}')
 
 
 @with_mocked_environment

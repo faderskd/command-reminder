@@ -40,8 +40,9 @@ class InitRepositoryProcessor(Processor):
         if not isinstance(data, InitOperationDto):
             return
         self._validate(data)
-        self._create_dir(self._config.repositories_dir)
+        self._create_dir(self._config.main_repository_fish_functions)
         self._init_git_repo(self._config.base_dir, data.repo)
+        self._add_functions_dir_to_search_path()
 
     @staticmethod
     def _validate(data: InitOperationDto) -> None:
@@ -54,6 +55,14 @@ class InitRepositoryProcessor(Processor):
             subprocess.run([f'cd {directory} && git init && git remote add origin {repo}'],
                            shell=True, check=True)
 
+    def _add_functions_dir_to_search_path(self) -> None:
+        current_path = os.getenv(FISH_FUNCTIONS_PATH_ENV)
+        main_functions_dir_exists = os.path.exists(self._config.main_repository_fish_functions)
+
+        if main_functions_dir_exists and (
+                not current_path or self._config.main_repository_fish_functions not in current_path):
+            os.environ[FISH_FUNCTIONS_PATH_ENV] = f'{current_path} {self._config.main_repository_fish_functions}'
+
 
 class RecordCommandProcessor(Processor):
     def __init__(self, config: Configuration):
@@ -62,11 +71,8 @@ class RecordCommandProcessor(Processor):
     def process(self, data: OperationData) -> None:
         if not isinstance(data, RecordCommandOperationDto):
             return
-        self._create_dir(self._config.main_repository_dir)
-        self._create_dir(self._config.main_repository_fish_functions)
         self._append_command(data)
         self._create_fish_function(data)
-        self._add_functions_dir_to_search_path()
 
     def _append_command(self, data: RecordCommandOperationDto) -> None:
         flags = 'w+'
@@ -89,11 +95,6 @@ class RecordCommandProcessor(Processor):
                 echo '{data.command}'
             end
             ''')
-
-    def _add_functions_dir_to_search_path(self) -> None:
-        current_path = os.getenv(FISH_FUNCTIONS_PATH_ENV)
-        if not current_path or self._config.main_repository_fish_functions not in current_path:
-            os.environ[FISH_FUNCTIONS_PATH_ENV] = f'{current_path} {self._config.main_repository_fish_functions}'
 
 
 class ListCommandsProcessor(Processor):
