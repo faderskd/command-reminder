@@ -5,6 +5,7 @@ import subprocess
 from abc import ABC, abstractmethod
 
 import giturlparse
+from termcolor import colored
 
 from command_reminder.common import InvalidArgumentException
 from command_reminder.config.config import Configuration, FISH_FUNCTIONS_PATH_ENV
@@ -105,7 +106,7 @@ class ListCommandsProcessor(Processor):
         if not isinstance(operation, ListOperationDto):
             return
         if not os.path.exists(self._config.main_repository_commands_file):
-            print([])
+            self._print_colored([])
 
         with open(self._config.main_repository_commands_file, 'r') as f:
             commands = read_file_content(f)
@@ -123,10 +124,13 @@ class ListCommandsProcessor(Processor):
                 results.append(FoundCommandsDto(command=content, name=name))
         return results
 
-    @staticmethod
-    def print_results(results: typing.List[FoundCommandsDto]):
+    def print_results(self, results: typing.List[FoundCommandsDto]):
         for r in results:
-            print(f"{r.name}: {r.command}")
+            self._print_colored(f"{r.name}: {r.command}")
+
+    @staticmethod
+    def _print_colored(text):
+        print(colored(text, 'blue', attrs=['bold']))
 
 
 class CompoundProcessor(Processor):

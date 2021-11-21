@@ -2,6 +2,7 @@ import os
 import unittest
 import shutil
 from contextlib import redirect_stdout
+from typing import List
 from unittest import mock
 
 from command_reminder.cli import parser
@@ -42,6 +43,9 @@ class BaseTestCase(unittest.TestCase):
             shutil.rmtree(TEST_PATH)
         except:
             pass
+
+    def assertOutputContains(self, stdout: List[str], expected: str):
+        self.assertTrue(any(expected in s for s in stdout))
 
 
 @with_mocked_environment
@@ -115,7 +119,7 @@ class CliRecordTestCase(BaseTestCase):
 
         with assert_stdout() as stdout:
             parser.parse_args(['list'])
-            self.assertIn('mongo_login: mongo dburl/dbname --username abc --password pass', stdout.output)
+            self.assertOutputContains(stdout.output, 'mongo_login: mongo dburl/dbname --username abc --password pass')
 
     def test_should_create_fish_function(self):
         # given
@@ -153,14 +157,14 @@ class CliListTestCase(BaseTestCase):
         with assert_stdout() as stdout:
             parser.parse_args(['list', '--tags', '#onduty'])
             self.assertEqual(len(stdout.output), 2)
-            self.assertIn('mongo: mongo', stdout.output)
-            self.assertIn('cassandra: cassandra', stdout.output)
+            self.assertOutputContains(stdout.output, 'mongo: mongo')
+            self.assertOutputContains(stdout.output, 'cassandra: cassandra')
 
         # when
         with assert_stdout() as stdout:
             parser.parse_args(['list', '--tags', '#mongo'])
             self.assertEqual(len(stdout.output), 1)
-            self.assertIn('mongo: mongo', stdout.output)
+            self.assertOutputContains(stdout.output, 'mongo: mongo')
 
     def test_allow_use_tags_with_comma(self):
         # given
@@ -174,7 +178,7 @@ class CliListTestCase(BaseTestCase):
 
             # then
             self.assertEqual(len(stdout.output), 1)
-            self.assertIn('mongo: mongo', stdout.output)
+            self.assertOutputContains(stdout.output, 'mongo: mongo')
 
         with assert_stdout() as stdout:
             # when
@@ -182,4 +186,4 @@ class CliListTestCase(BaseTestCase):
 
             # then
             self.assertEqual(len(stdout.output), 1)
-            self.assertIn('mongo: mongo', stdout.output)
+            self.assertOutputContains(stdout.output, 'mongo: mongo')
