@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import typing
 import subprocess
 from abc import ABC, abstractmethod
@@ -91,15 +92,20 @@ class RecordCommandProcessor(Processor):
             f.truncate()
 
     def _create_fish_function(self, data: RecordCommandOperationDto) -> None:
-        fish_func_file = os.path.join(self._config.main_repository_fish_functions, data.name + '.fish')
+        name = self.parse_name(data.name)
+        fish_func_file = os.path.join(self._config.main_repository_fish_functions, name + '.fish')
         if os.path.exists(fish_func_file):
             return
         with open(fish_func_file, 'w+') as f:
             f.write(f'''
-            function {data.name}
+            function {name}
                 set color {self.ECHO_COLOR}; echo '{data.command}'
             end
             ''')
+
+    @staticmethod
+    def parse_name(name):
+        return re.sub('\\s+', '_', name)
 
 
 class ListCommandsProcessor(Processor):

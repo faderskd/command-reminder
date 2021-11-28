@@ -110,13 +110,13 @@ class CliRecordTestCase(BaseTestCase):
             parser.parse_args(['list'])
             self.assertOutputContains(stdout.output, 'mongo_login: mongo dburl/dbname --username abc --password pass')
 
-    def test_should_create_fish_function(self):
+    def test_should_create_fish_function_joined_by_underscores(self):
         # given
         parser.parse_args(['init'])
 
         # when
         parser.parse_args(
-            ['record', '--name', 'mongo_login', '--command', 'mongo dburl/dbname --username abc --password pass'])
+            ['record', '--name', 'mongo login', '--command', 'mongo dburl/dbname --username abc --password pass'])
 
         # then
         function_file = os.path.join(os.environ[COMMAND_REMINDER_DIR_ENV], REPOSITORIES_DIR, MAIN_REPOSITORY_DIR,
