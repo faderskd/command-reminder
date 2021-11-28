@@ -43,7 +43,7 @@ class InitRepositoryProcessor(Processor):
         self._validate(data)
         self._create_dir(self._config.main_repository_fish_functions)
         self._init_git_repo(self._config.base_dir, data.repo)
-        self._add_functions_dir_to_search_path()
+        self._generate_init_script()
 
     @staticmethod
     def _validate(data: InitOperationDto) -> None:
@@ -56,16 +56,20 @@ class InitRepositoryProcessor(Processor):
             subprocess.run([f'cd {directory} && git init && git remote add origin {repo}'],
                            shell=True, check=True)
 
-    def _add_functions_dir_to_search_path(self) -> None:
-        current_path = os.getenv(FISH_FUNCTIONS_PATH_ENV)
+    def _generate_init_script(self):
+        self._script_setting_functions_dir_to_search_path()
+
+    def _script_setting_functions_dir_to_search_path(self) -> None:
         main_functions_dir_exists = os.path.exists(self._config.main_repository_fish_functions)
 
-        if main_functions_dir_exists and (
-                not current_path or self._config.main_repository_fish_functions not in current_path):
-            os.environ[FISH_FUNCTIONS_PATH_ENV] = f'{current_path} {self._config.main_repository_fish_functions}'
+        if main_functions_dir_exists:
+            print(
+                f'set -gx {FISH_FUNCTIONS_PATH_ENV} ${FISH_FUNCTIONS_PATH_ENV} {self._config.main_repository_fish_functions}')
 
 
 class RecordCommandProcessor(Processor):
+    ECHO_COLOR = 'blue'
+
     def __init__(self, config: Configuration):
         self._config = config
 
@@ -93,7 +97,7 @@ class RecordCommandProcessor(Processor):
         with open(fish_func_file, 'w+') as f:
             f.write(f'''
             function {data.name}
-                echo '{data.command}'
+                set color {self.ECHO_COLOR}; echo '{data.command}'
             end
             ''')
 
@@ -120,7 +124,7 @@ class ListCommandsProcessor(Processor):
         search_tags = set(search_tags)
         for (name, (content, tags)) in commands.items():
             tags = set(tags)
-            if search_tags.issubset(tags):
+            if not search_tags or search_tags.issubset(tags):
                 results.append(FoundCommandsDto(command=content, name=name))
         return results
 
@@ -130,7 +134,7 @@ class ListCommandsProcessor(Processor):
 
     @staticmethod
     def _print_colored(text):
-        print(colored(text, 'blue', attrs=['bold']))
+        print(colored(text, 'blue'))
 
 
 class CompoundProcessor(Processor):

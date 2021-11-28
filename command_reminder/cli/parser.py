@@ -27,7 +27,8 @@ def parse_args(raw_args) -> None:
         app_context.compound_processor.process(RecordCommandOperationDto(
             command=args.command, name=args.name, tags=re.split('[\\s,]+', args.tags)))
     elif operation == Operations.LIST:
-        app_context.compound_processor.process(ListOperationDto(tags=re.split('[\\s,]+', args.tags)))
+        app_context.compound_processor.process(
+            ListOperationDto(tags=re.split('[\\s,]+', args.tags) if args.tags else []))
     else:
         parser.print_help()
 

@@ -67,23 +67,12 @@ class CliInitTestCase(BaseTestCase):
         self.assertTrue(os.path.exists(f'/{TEST_PATH}/{REPOSITORIES_DIR}/{MAIN_REPOSITORY_DIR}/{FISH_FUNCTIONS_DIR}'))
         self.assertFalse(os.path.exists(os.path.join(os.environ[COMMAND_REMINDER_DIR_ENV], ".git")))
 
-    def test_should_add_fish_functions_main_directory_to_search_path_if_needed(self):
-        # given
-        self.assertEquals(os.environ.get(FISH_FUNCTIONS_PATH_ENV), '/some/path')
-
+    def test_should_return_init_script(self):
         # when
-        parser.parse_args(['init'])
-
-        # then
-        self.assertEquals(os.environ.get(FISH_FUNCTIONS_PATH_ENV),
-                          f'/some/path {TEST_PATH}/{REPOSITORIES_DIR}/{MAIN_REPOSITORY_DIR}/{FISH_FUNCTIONS_DIR}')
-
-        # when
-        parser.parse_args(['init'])
-
-        # then
-        self.assertEquals(os.environ.get(FISH_FUNCTIONS_PATH_ENV),
-                          f'/some/path {TEST_PATH}/{REPOSITORIES_DIR}/{MAIN_REPOSITORY_DIR}/{FISH_FUNCTIONS_DIR}')
+        with assert_stdout() as stdout:
+            parser.parse_args(['init'])
+            self.assertOutputContains(stdout.output,
+                                      f'set -gx {FISH_FUNCTIONS_PATH_ENV} ${FISH_FUNCTIONS_PATH_ENV} {TEST_PATH}/{REPOSITORIES_DIR}/{MAIN_REPOSITORY_DIR}/{FISH_FUNCTIONS_DIR}')
 
     @mock.patch.dict('os.environ', {COMMAND_REMINDER_DIR_ENV: TEST_PATH, HOME_DIR_ENV: ""})
     def test_should_throw_error_when_home_env_is_not_set(self):
@@ -139,7 +128,7 @@ class CliRecordTestCase(BaseTestCase):
             content = ''.join([line for line in f.readlines()])
             self.assertEqual(content, '''
             function mongo_login
-                echo 'mongo dburl/dbname --username abc --password pass'
+                set color blue; echo 'mongo dburl/dbname --username abc --password pass'
             end
             ''')
 
@@ -187,3 +176,18 @@ class CliListTestCase(BaseTestCase):
             # then
             self.assertEqual(len(stdout.output), 1)
             self.assertOutputContains(stdout.output, 'mongo: mongo')
+
+    def test_should_list_all_commands_when_no_tags_given(self):
+        # given
+        parser.parse_args(['init'])
+        parser.parse_args(['record', '--name', 'mongo1', '--command', 'mongo', '--tags', '#onduty,#mongo'])
+        parser.parse_args(['record', '--name', 'mongo2', '--command', 'mongo'])
+
+        with assert_stdout() as stdout:
+            # when
+            parser.parse_args(['list'])
+
+            # then
+            self.assertEqual(len(stdout.output), 2)
+            self.assertOutputContains(stdout.output, 'mongo1: mongo')
+            self.assertOutputContains(stdout.output, 'mongo2: mongo')
