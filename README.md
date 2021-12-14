@@ -13,9 +13,9 @@ pip install command-reminder
 
 #### Record useful commands
 
-> cr record "mongo dburl/dbname --username abc --password pass"
+> cr record  --name "mongo_login" --command "mongo dburl/dbname --username abc --password pass"
 >
-> cr record --tags "#sed #macosx" "sed -i '' -e 's/source/target/g'" file.txt
+> cr record --name "sed" --tags "#sed #macosx" --command "sed -i '' -e 's/source/target/g' file.txt"
 
 #### Show commands
 > cr show --tags #sed
@@ -29,8 +29,36 @@ pip install command-reminder
 #### Add external repository
 > cr repo add git@github.com:faderskd/command-reminder-network.git
 
-# Configuration
+#### Configuration
 ```editorconfig
 [REPOSITORY]
 ConfigDir = ~/.command-reminder
+``` 
+
+#### Publish
+```
+python setup.py sdist
+twine check dist/*
+twine upload dist/*
+```
+
+#### Installation from local setup.py
+```
+pip install .
+```
+
+#### Repository structure
+```
+~/.command-reminder/
+    config
+    repositories/
+        main/
+            commands.txt
+            fish/
+        extensions/
+            ext1/
+                commands.txt
+                fish/
+            ext1/
+            ...
 ``` 

@@ -1,0 +1,8 @@
+#!/usr/bin/python3
+
+import sys
+
+from command_reminder.cli.parser import parse_args
+
+sys.argv[0] = "command-reminder"
+parse_args(sys.argv[1:])
