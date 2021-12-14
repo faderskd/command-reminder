@@ -5,10 +5,12 @@ from contextlib import redirect_stdout
 from typing import List
 from unittest import mock
 
+from command_reminder.common import InvalidArgumentException
+
 from command_reminder.cli import parser
-from command_reminder.config.config import COMMAND_REMINDER_DIR_ENV, HOME_DIR_ENV, REPOSITORIES_DIR, \
-    MAIN_REPOSITORY_DIR, COMMANDS_FILE_NAME, FISH_FUNCTIONS_DIR, FISH_FUNCTIONS_PATH_ENV
-from command_reminder.operations.processors import InvalidArgumentException
+from command_reminder.config.config import COMMAND_REMINDER_DIR_ENV, HOME_DIR_ENV, REPOSITORIES_DIR_NAME, \
+    MAIN_REPOSITORY_DIR_NAME, COMMANDS_FILE_NAME, FISH_FUNCTIONS_DIR_NAME, FISH_FUNCTIONS_PATH_ENV, FISH_HISTORY_DIR, \
+    FISH_HISTORY_FILE_NAME
 from tests.helpers import with_mocked_environment, TEST_PATH
 
 
@@ -37,6 +39,15 @@ def assert_stdout() -> StdoutRedirectionContext:
 
 
 class BaseTestCase(unittest.TestCase):
+    def setUp(self) -> None:
+        history_dir = os.path.join(TEST_PATH, FISH_HISTORY_DIR)
+        self.history_file = os.path.join(history_dir, FISH_HISTORY_FILE_NAME)
+        os.makedirs(history_dir)
+        with open(self.history_file, 'w') as f:
+            f.write(f'''
+- cmd brew install fish
+  when 1639436632
+''')
 
     def tearDown(self) -> None:
         try:
@@ -56,7 +67,7 @@ class CliInitTestCase(BaseTestCase):
         parser.parse_args(['init', '--repo', 'git@github.com:faderskd/command-reminder.git'])
 
         # then
-        self.assertTrue(os.path.exists(f'/{TEST_PATH}/{REPOSITORIES_DIR}/{MAIN_REPOSITORY_DIR}/{FISH_FUNCTIONS_DIR}'))
+        self.assertTrue(os.path.exists(f'/{TEST_PATH}/{REPOSITORIES_DIR_NAME}/{MAIN_REPOSITORY_DIR_NAME}/{FISH_FUNCTIONS_DIR_NAME}'))
         self.assertTrue(os.path.exists(os.path.join(os.environ[COMMAND_REMINDER_DIR_ENV], ".git")))
 
     def test_should_init_directory_without_github_repository_given(self):
@@ -64,7 +75,7 @@ class CliInitTestCase(BaseTestCase):
         parser.parse_args(['init'])
 
         # then
-        self.assertTrue(os.path.exists(f'/{TEST_PATH}/{REPOSITORIES_DIR}/{MAIN_REPOSITORY_DIR}/{FISH_FUNCTIONS_DIR}'))
+        self.assertTrue(os.path.exists(f'/{TEST_PATH}/{REPOSITORIES_DIR_NAME}/{MAIN_REPOSITORY_DIR_NAME}/{FISH_FUNCTIONS_DIR_NAME}'))
         self.assertFalse(os.path.exists(os.path.join(os.environ[COMMAND_REMINDER_DIR_ENV], ".git")))
 
     def test_should_return_init_script(self):
@@ -72,7 +83,7 @@ class CliInitTestCase(BaseTestCase):
         with assert_stdout() as stdout:
             parser.parse_args(['init'])
             self.assertOutputContains(stdout.output,
-                                      f'set -gx {FISH_FUNCTIONS_PATH_ENV} ${FISH_FUNCTIONS_PATH_ENV} {TEST_PATH}/{REPOSITORIES_DIR}/{MAIN_REPOSITORY_DIR}/{FISH_FUNCTIONS_DIR}')
+                                      f'set -gx {FISH_FUNCTIONS_PATH_ENV} ${FISH_FUNCTIONS_PATH_ENV} {TEST_PATH}/{REPOSITORIES_DIR_NAME}/{MAIN_REPOSITORY_DIR_NAME}/{FISH_FUNCTIONS_DIR_NAME}')
 
     @mock.patch.dict('os.environ', {COMMAND_REMINDER_DIR_ENV: TEST_PATH, HOME_DIR_ENV: ""})
     def test_should_throw_error_when_home_env_is_not_set(self):
@@ -104,7 +115,7 @@ class CliRecordTestCase(BaseTestCase):
 
         # then
         self.assertTrue(os.path.exists(os.path.join(os.environ[COMMAND_REMINDER_DIR_ENV],
-                                                    REPOSITORIES_DIR, MAIN_REPOSITORY_DIR, COMMANDS_FILE_NAME)))
+                                                    REPOSITORIES_DIR_NAME, MAIN_REPOSITORY_DIR_NAME, COMMANDS_FILE_NAME)))
 
         with assert_stdout() as stdout:
             parser.parse_args(['list'])
@@ -119,8 +130,8 @@ class CliRecordTestCase(BaseTestCase):
             ['record', '--name', 'mongo login', '--command', 'mongo dburl/dbname --username abc --password pass'])
 
         # then
-        function_file = os.path.join(os.environ[COMMAND_REMINDER_DIR_ENV], REPOSITORIES_DIR, MAIN_REPOSITORY_DIR,
-                                     FISH_FUNCTIONS_DIR, 'mongo_login.fish')
+        function_file = os.path.join(os.environ[COMMAND_REMINDER_DIR_ENV], REPOSITORIES_DIR_NAME, MAIN_REPOSITORY_DIR_NAME,
+                                     FISH_FUNCTIONS_DIR_NAME, 'mongo_login.fish')
         self.assertTrue(os.path.exists(function_file))
 
         # and
@@ -191,3 +202,24 @@ class CliListTestCase(BaseTestCase):
             self.assertEqual(len(stdout.output), 2)
             self.assertOutputContains(stdout.output, 'mongo1: mongo')
             self.assertOutputContains(stdout.output, 'mongo2: mongo')
+
+    @mock.patch('command_reminder.common.get_timestamp')
+    def test_should_load_command_to_history_if_there_is_one_result(self, get_timestamp_mock):
+        # given
+        parser.parse_args(['init'])
+        parser.parse_args(['record', '--name', 'mongo1', '--command', 'mongo dburl/dbname --username abc --password pass', '--tags', '#onduty,#mongo'])
+        get_timestamp_mock.return_value = 1639436633
+
+        # when
+        parser.parse_args(['list'])
+
+        # then
+        history_file = os.path.join(TEST_PATH, '.local/share/fish/fish_history')
+        with open(history_file, 'r') as f:
+            content = ''.join([line for line in f.readlines()])
+            self.assertEqual(content, f'''
+- cmd brew install fish
+  when 1639436632
+- cmd mongo dburl/dbname --username abc --password pass
+  when 1639436633
+''')

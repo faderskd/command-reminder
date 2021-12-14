@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 import giturlparse
 from termcolor import colored
 
-from command_reminder.common import InvalidArgumentException
+from command_reminder import common
 from command_reminder.config.config import Configuration, FISH_FUNCTIONS_PATH_ENV
 from command_reminder.operations.dto import OperationData, InitOperationDto, RecordCommandOperationDto, \
     ListOperationDto, FoundCommandsDto
@@ -49,7 +49,7 @@ class InitRepositoryProcessor(Processor):
     @staticmethod
     def _validate(data: InitOperationDto) -> None:
         if data.repo and not giturlparse.validate(data.repo):
-            raise InvalidArgumentException("Invalid git repository url")
+            raise common.InvalidArgumentException("Invalid git repository url")
 
     @staticmethod
     def _init_git_repo(directory: str, repo: str):
@@ -121,7 +121,8 @@ class ListCommandsProcessor(Processor):
         with open(self._config.main_repository_commands_file, 'r') as f:
             commands = read_file_content(f)
             results = self._search_for_commands_with_tags(commands, operation.tags)
-        self.print_results(results)
+        self._print_results(results)
+        self._populate_fish_history(results)
 
     @staticmethod
     def _search_for_commands_with_tags(commands: typing.Dict[str, typing.List[typing.List[str]]],
@@ -134,13 +135,21 @@ class ListCommandsProcessor(Processor):
                 results.append(FoundCommandsDto(command=content, name=name))
         return results
 
-    def print_results(self, results: typing.List[FoundCommandsDto]):
+    def _print_results(self, results: typing.List[FoundCommandsDto]):
         for r in results:
             self._print_colored(f"{r.name}: {r.command}")
 
     @staticmethod
     def _print_colored(text):
         print(colored(text, 'blue'))
+
+    def _populate_fish_history(self, results: typing.List[FoundCommandsDto]):
+        if len(results) > 1:
+            return
+        command = results[0].command
+        with open(self._config.fish_history_file, 'a') as f:
+            f.writelines([f'- cmd {command}\n',
+                          f'  when {common.get_timestamp()}\n'])
 
 
 class CompoundProcessor(Processor):
