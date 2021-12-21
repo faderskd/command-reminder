@@ -10,7 +10,7 @@ from command_reminder.common import InvalidArgumentException
 from command_reminder.cli import parser
 from command_reminder.config.config import COMMAND_REMINDER_DIR_ENV, HOME_DIR_ENV, REPOSITORIES_DIR_NAME, \
     MAIN_REPOSITORY_DIR_NAME, COMMANDS_FILE_NAME, FISH_FUNCTIONS_DIR_NAME, FISH_FUNCTIONS_PATH_ENV, FISH_HISTORY_DIR, \
-    FISH_HISTORY_FILE_NAME
+    FISH_HISTORY_FILE_NAME, HISTORY_LOAD_FILE_NAME
 from tests.helpers import with_mocked_environment, TEST_PATH
 
 
@@ -45,8 +45,8 @@ class BaseTestCase(unittest.TestCase):
         os.makedirs(history_dir)
         with open(self.history_file, 'w') as f:
             f.write(f'''
-- cmd brew install fish
-  when 1639436632
+- cmd: brew install fish
+  when: 1639436632
 ''')
 
     def tearDown(self) -> None:
@@ -58,6 +58,11 @@ class BaseTestCase(unittest.TestCase):
     def assertOutputContains(self, stdout: List[str], expected: str):
         self.assertTrue(any(expected in s for s in stdout))
 
+    def assertFileContent(self, file_path, expected: str):
+        with open(file_path, 'r') as f:
+            content = ''.join([line for line in f.readlines()])
+            self.assertEqual(content, expected)
+
 
 @with_mocked_environment
 class CliInitTestCase(BaseTestCase):
@@ -67,15 +72,21 @@ class CliInitTestCase(BaseTestCase):
         parser.parse_args(['init', '--repo', 'git@github.com:faderskd/command-reminder.git'])
 
         # then
-        self.assertTrue(os.path.exists(f'/{TEST_PATH}/{REPOSITORIES_DIR_NAME}/{MAIN_REPOSITORY_DIR_NAME}/{FISH_FUNCTIONS_DIR_NAME}'))
-        self.assertTrue(os.path.exists(os.path.join(os.environ[COMMAND_REMINDER_DIR_ENV], ".git")))
+        self.assertTrue(os.path.exists(
+            f'/{TEST_PATH}/{REPOSITORIES_DIR_NAME}/{MAIN_REPOSITORY_DIR_NAME}/{FISH_FUNCTIONS_DIR_NAME}'))
+        self.assertTrue(os.path.exists(
+            f'/{TEST_PATH}/{REPOSITORIES_DIR_NAME}/{MAIN_REPOSITORY_DIR_NAME}/{COMMANDS_FILE_NAME}'))
+        self.assertTrue(os.path.exists(os.path.join(TEST_PATH, ".git")))
 
     def test_should_init_directory_without_github_repository_given(self):
         # when
         parser.parse_args(['init'])
 
         # then
-        self.assertTrue(os.path.exists(f'/{TEST_PATH}/{REPOSITORIES_DIR_NAME}/{MAIN_REPOSITORY_DIR_NAME}/{FISH_FUNCTIONS_DIR_NAME}'))
+        self.assertTrue(os.path.exists(
+            f'/{TEST_PATH}/{REPOSITORIES_DIR_NAME}/{MAIN_REPOSITORY_DIR_NAME}/{FISH_FUNCTIONS_DIR_NAME}'))
+        self.assertTrue(os.path.exists(
+            f'/{TEST_PATH}/{REPOSITORIES_DIR_NAME}/{MAIN_REPOSITORY_DIR_NAME}/{COMMANDS_FILE_NAME}'))
         self.assertFalse(os.path.exists(os.path.join(os.environ[COMMAND_REMINDER_DIR_ENV], ".git")))
 
     def test_should_return_init_script(self):
@@ -102,6 +113,20 @@ class CliInitTestCase(BaseTestCase):
             # then
             self.assertFalse(os.path.exists(os.environ[COMMAND_REMINDER_DIR_ENV]))
 
+    def test_should_create_alias_for_history_merge_command(self):
+        # when
+        parser.parse_args(['init'])
+
+        # then
+        alias_function = os.path.join(TEST_PATH, REPOSITORIES_DIR_NAME, MAIN_REPOSITORY_DIR_NAME,
+                                      FISH_FUNCTIONS_DIR_NAME, HISTORY_LOAD_FILE_NAME)
+
+        # and
+        self.assertFileContent(alias_function, '''
+function h
+    cr load && history merge
+end
+''')
 
 @with_mocked_environment
 class CliRecordTestCase(BaseTestCase):
@@ -115,7 +140,8 @@ class CliRecordTestCase(BaseTestCase):
 
         # then
         self.assertTrue(os.path.exists(os.path.join(os.environ[COMMAND_REMINDER_DIR_ENV],
-                                                    REPOSITORIES_DIR_NAME, MAIN_REPOSITORY_DIR_NAME, COMMANDS_FILE_NAME)))
+                                                    REPOSITORIES_DIR_NAME, MAIN_REPOSITORY_DIR_NAME,
+                                                    COMMANDS_FILE_NAME)))
 
         with assert_stdout() as stdout:
             parser.parse_args(['list'])
@@ -130,22 +156,29 @@ class CliRecordTestCase(BaseTestCase):
             ['record', '--name', 'mongo login', '--command', 'mongo dburl/dbname --username abc --password pass'])
 
         # then
-        function_file = os.path.join(os.environ[COMMAND_REMINDER_DIR_ENV], REPOSITORIES_DIR_NAME, MAIN_REPOSITORY_DIR_NAME,
+        function_file = os.path.join(os.environ[COMMAND_REMINDER_DIR_ENV], REPOSITORIES_DIR_NAME,
+                                     MAIN_REPOSITORY_DIR_NAME,
                                      FISH_FUNCTIONS_DIR_NAME, 'mongo_login.fish')
         self.assertTrue(os.path.exists(function_file))
 
         # and
-        with open(function_file, 'r') as f:
-            content = ''.join([line for line in f.readlines()])
-            self.assertEqual(content, '''
-            function mongo_login
-                set color blue; echo 'mongo dburl/dbname --username abc --password pass'
-            end
-            ''')
+        self.assertFileContent(function_file, '''
+function mongo_login
+    set color blue; echo 'mongo dburl/dbname --username abc --password pass'
+end''')
 
 
 @with_mocked_environment
 class CliListTestCase(BaseTestCase):
+    def test_should_list_empty_commands(self):
+        # given
+        parser.parse_args(['init'])
+
+        # expect
+        with assert_stdout() as stdout:
+            parser.parse_args(['list'])
+            self.assertEqual(len(stdout.output), 0)
+
     def test_should_filter_commands_by_tags(self):
         # given
         parser.parse_args(['init'])
@@ -203,23 +236,50 @@ class CliListTestCase(BaseTestCase):
             self.assertOutputContains(stdout.output, 'mongo1: mongo')
             self.assertOutputContains(stdout.output, 'mongo2: mongo')
 
-    @mock.patch('command_reminder.common.get_timestamp')
-    def test_should_load_command_to_history_if_there_is_one_result(self, get_timestamp_mock):
+
+@mock.patch('command_reminder.cli.parser.sys.stdin.readlines')
+@mock.patch('command_reminder.common.get_timestamp')
+@with_mocked_environment
+class TestLoadCommandsListCase(BaseTestCase):
+
+    def test_should_load_single_command_to_history(self, get_timestamp_mock, stdin_mock):
         # given
-        parser.parse_args(['init'])
-        parser.parse_args(['record', '--name', 'mongo1', '--command', 'mongo dburl/dbname --username abc --password pass', '--tags', '#onduty,#mongo'])
         get_timestamp_mock.return_value = 1639436633
+        stdin_mock.return_value = ['mongo: dburl/dbname --username abc --password pass\n']
 
         # when
-        parser.parse_args(['list'])
+        parser.parse_args(['load'])
 
         # then
         history_file = os.path.join(TEST_PATH, '.local/share/fish/fish_history')
-        with open(history_file, 'r') as f:
-            content = ''.join([line for line in f.readlines()])
-            self.assertEqual(content, f'''
-- cmd brew install fish
-  when 1639436632
-- cmd mongo dburl/dbname --username abc --password pass
-  when 1639436633
+        self.assertFileContent(history_file, f'''
+- cmd: brew install fish
+  when: 1639436632
+- cmd: dburl/dbname --username abc --password pass
+  when: 1639436633
+''')
+
+    def test_should_load_multiple_commands_to_history(self, get_timestamp_mock, stdin_mock):
+        # given
+        get_timestamp_mock.return_value = 1639436633
+        stdin_mock.return_value = [
+            'mongo: dburl/dbname --username abc --password pass\n',
+            'curl-local: curl http://localhost:8080\n',
+            'ssh-machine: ssh somelogin@somemachine.domain.pl\n',
+        ]
+
+        # when
+        parser.parse_args(['load'])
+
+        # then
+        history_file = os.path.join(TEST_PATH, '.local/share/fish/fish_history')
+        self.assertFileContent(history_file, f'''
+- cmd: brew install fish
+  when: 1639436632
+- cmd: dburl/dbname --username abc --password pass
+  when: 1639436633
+- cmd: curl http://localhost:8080
+  when: 1639436633
+- cmd: ssh somelogin@somemachine.domain.pl
+  when: 1639436633
 ''')

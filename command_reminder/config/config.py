@@ -15,6 +15,7 @@ EXTENSIONS_REPOSITORY_DIR_NAME = 'extensions'
 FISH_FUNCTIONS_DIR_NAME = 'fish'
 FISH_HISTORY_DIR = '.local/share/fish'
 FISH_HISTORY_FILE_NAME = 'fish_history'
+HISTORY_LOAD_FILE_NAME = 'h.fish'
 
 
 @dataclass

@@ -20,9 +20,15 @@ class RecordCommandOperationDto(OperationData):
 @dataclass
 class ListOperationDto(OperationData):
     tags: typing.List[str]
+    pretty: bool
 
 
 @dataclass
 class FoundCommandsDto:
     command: str
     name: str
+
+
+@dataclass
+class LoadCommandsListDto:
+    commands: typing.List[str]

@@ -9,9 +9,9 @@ import giturlparse
 from termcolor import colored
 
 from command_reminder import common
-from command_reminder.config.config import Configuration, FISH_FUNCTIONS_PATH_ENV
+from command_reminder.config.config import Configuration, FISH_FUNCTIONS_PATH_ENV, HISTORY_LOAD_FILE_NAME
 from command_reminder.operations.dto import OperationData, InitOperationDto, RecordCommandOperationDto, \
-    ListOperationDto, FoundCommandsDto
+    ListOperationDto, FoundCommandsDto, LoadCommandsListDto
 
 
 def read_file_content(f):
@@ -33,6 +33,11 @@ class Processor(ABC):
         if not os.path.exists(path):
             os.makedirs(path)
 
+    @staticmethod
+    def _create_empty_file(path: str) -> None:
+        if not os.path.exists(path):
+            with open(path, 'w+'): ...
+
 
 class InitRepositoryProcessor(Processor):
     def __init__(self, config: Configuration):
@@ -43,7 +48,9 @@ class InitRepositoryProcessor(Processor):
             return
         self._validate(data)
         self._create_dir(self._config.main_repository_fish_functions)
+        self._create_empty_file(self._config.main_repository_commands_file)
         self._init_git_repo(self._config.base_dir, data.repo)
+        self._create_load_history_alias()
         self._generate_init_script()
 
     @staticmethod
@@ -52,12 +59,12 @@ class InitRepositoryProcessor(Processor):
             raise common.InvalidArgumentException("Invalid git repository url")
 
     @staticmethod
-    def _init_git_repo(directory: str, repo: str):
+    def _init_git_repo(directory: str, repo: str) -> None:
         if repo:
             subprocess.run([f'cd {directory} && git init && git remote add origin {repo}'],
                            shell=True, check=True)
 
-    def _generate_init_script(self):
+    def _generate_init_script(self) -> None:
         self._script_setting_functions_dir_to_search_path()
 
     def _script_setting_functions_dir_to_search_path(self) -> None:
@@ -66,6 +73,17 @@ class InitRepositoryProcessor(Processor):
         if main_functions_dir_exists:
             print(
                 f'set -gx {FISH_FUNCTIONS_PATH_ENV} ${FISH_FUNCTIONS_PATH_ENV} {self._config.main_repository_fish_functions}')
+
+    def _create_load_history_alias(self) -> None:
+        alias_file = os.path.join(self._config.main_repository_fish_functions, HISTORY_LOAD_FILE_NAME)
+        if os.path.exists(alias_file):
+            return
+        with open(alias_file, 'w+') as f:
+            f.write('''
+function h
+    cr load && history merge
+end
+''')
 
 
 class RecordCommandProcessor(Processor):
@@ -92,20 +110,14 @@ class RecordCommandProcessor(Processor):
             f.truncate()
 
     def _create_fish_function(self, data: RecordCommandOperationDto) -> None:
-        name = self.parse_name(data.name)
-        fish_func_file = os.path.join(self._config.main_repository_fish_functions, name + '.fish')
+        fish_func_file = os.path.join(self._config.main_repository_fish_functions, data.name + '.fish')
         if os.path.exists(fish_func_file):
             return
         with open(fish_func_file, 'w+') as f:
             f.write(f'''
-            function {name}
-                set color {self.ECHO_COLOR}; echo '{data.command}'
-            end
-            ''')
-
-    @staticmethod
-    def parse_name(name):
-        return re.sub('\\s+', '_', name)
+function {data.name}
+    set color {self.ECHO_COLOR}; echo '{data.command}'
+end''')
 
 
 class ListCommandsProcessor(Processor):
@@ -121,8 +133,7 @@ class ListCommandsProcessor(Processor):
         with open(self._config.main_repository_commands_file, 'r') as f:
             commands = read_file_content(f)
             results = self._search_for_commands_with_tags(commands, operation.tags)
-        self._print_results(results)
-        self._populate_fish_history(results)
+        self._print_results(results, operation.pretty)
 
     @staticmethod
     def _search_for_commands_with_tags(commands: typing.Dict[str, typing.List[typing.List[str]]],
@@ -135,21 +146,42 @@ class ListCommandsProcessor(Processor):
                 results.append(FoundCommandsDto(command=content, name=name))
         return results
 
-    def _print_results(self, results: typing.List[FoundCommandsDto]):
+    def _print_results(self, results: typing.List[FoundCommandsDto], pretty: bool):
         for r in results:
-            self._print_colored(f"{r.name}: {r.command}")
+            if pretty:
+                self._print_colored(f"{r.name}: {r.command}")
+            else:
+                print(f"{r.name}: {r.command}")
 
     @staticmethod
     def _print_colored(text):
         print(colored(text, 'blue'))
 
-    def _populate_fish_history(self, results: typing.List[FoundCommandsDto]):
-        if len(results) > 1:
+
+class LoadCommandProcessor(Processor):
+    COMMAND_LINE_REGEX = "[\\w+-]+: (.+)"
+
+    def __init__(self, config: Configuration):
+        self._config = config
+
+    def process(self, operation: OperationData) -> None:
+        if not isinstance(operation, LoadCommandsListDto):
             return
-        command = results[0].command
+        self._populate_fish_history(operation.commands)
+
+    def _populate_fish_history(self, commands: typing.List[str]):
         with open(self._config.fish_history_file, 'a') as f:
-            f.writelines([f'- cmd {command}\n',
-                          f'  when {common.get_timestamp()}\n'])
+            for c in self._preprocess(commands):
+                f.writelines([f'- cmd: {c}\n',
+                              f'  when: {common.get_timestamp()}\n'])
+
+    def _preprocess(self, commands: typing.List[str]) -> typing.Iterable[str]:
+        filtered_commands = filter(lambda s: s.strip() and not s.strip().isspace(), commands)
+        parsed_commands = list(map(lambda s: s.strip(), filtered_commands))
+
+        for fc in parsed_commands:
+            if match := re.match(self.COMMAND_LINE_REGEX, fc):
+                yield match.group(1)
 
 
 class CompoundProcessor(Processor):
