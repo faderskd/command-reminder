@@ -3,16 +3,21 @@ import sys
 import argparse
 from argparse import ArgumentParser
 
-from command_reminder.operations.dto import InitOperationDto, RecordCommandOperationDto, ListOperationDto
+from command_reminder.operations.dto import InitOperationDto, RecordCommandOperationDto, ListOperationDto, \
+    LoadCommandsListDto
 from command_reminder.config.config import DEFAULT_REPOSITORY_DIR
 
 from command_reminder.cli.initializer import AppContext
+
+TAGS_SPLITTER = '[\\s,]+'
+NAME_REPLACER = '[\\s+-]'
 
 
 class Operations:
     INIT = "init"
     RECORD = "record"
     LIST = "list"
+    LOAD = "load"
 
 
 def parse_args(raw_args) -> None:
@@ -25,10 +30,14 @@ def parse_args(raw_args) -> None:
         app_context.compound_processor.process(InitOperationDto(repo=args.repo))
     elif operation == Operations.RECORD:
         app_context.compound_processor.process(RecordCommandOperationDto(
-            command=args.command, name=args.name, tags=re.split('[\\s,]+', args.tags)))
+            command=args.command, name=re.sub(NAME_REPLACER, '_', args.name), tags=re.split(TAGS_SPLITTER, args.tags)))
     elif operation == Operations.LIST:
         app_context.compound_processor.process(
-            ListOperationDto(tags=re.split('[\\s,]+', args.tags) if args.tags else []))
+            ListOperationDto(tags=re.split(TAGS_SPLITTER, args.tags) if args.tags else [], pretty=args.pretty))
+    elif operation == Operations.LOAD:
+        app_context.compound_processor.process(
+            LoadCommandsListDto(commands=sys.stdin.readlines())
+        )
     else:
         parser.print_help()
 
@@ -39,6 +48,7 @@ def define_parser():
     init_parser = subparsers.add_parser(Operations.INIT, description="Initializes command-reminder project")
     record_parser = subparsers.add_parser(Operations.RECORD, description="Adds command to registry")
     list_parser = subparsers.add_parser(Operations.LIST, description="Adds command to registry")
+    subparsers.add_parser(Operations.LOAD, description="Loads command to history")
     _init_subparser(init_parser)
     _record_subparser(record_parser)
     _list_subparser(list_parser)
@@ -62,6 +72,7 @@ def _record_subparser(parser: ArgumentParser) -> None:
 def _list_subparser(parser: ArgumentParser) -> None:
     parser.add_argument('-t', '--tags', type=str,
                         help='Tags to search commands for.', default="")
+    parser.add_argument('-p', '--pretty', action='store_true')
 
 
 if __name__ == '__main__':
