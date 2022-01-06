@@ -56,6 +56,9 @@ class Configuration:
         home = os.getenv(HOME_DIR_ENV)
         return os.path.join(home, FISH_HISTORY_DIR, FISH_HISTORY_FILE_NAME)
 
+    def fish_function_file(self, command_name: str) -> str:
+        return os.path.join(self.main_repository_fish_functions, command_name + '.fish')
+
     @staticmethod
     def _validate(home: str):
         if not home:

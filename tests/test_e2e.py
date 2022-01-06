@@ -65,7 +65,7 @@ class BaseTestCase(unittest.TestCase):
 
 
 @with_mocked_environment
-class CliInitTestCase(BaseTestCase):
+class InitTestCase(BaseTestCase):
 
     def test_should_init_empty_github_repository(self):
         # when
@@ -128,8 +128,9 @@ function h
 end
 ''')
 
+
 @with_mocked_environment
-class CliRecordTestCase(BaseTestCase):
+class RecordTestCase(BaseTestCase):
     def test_should_record_command(self):
         # given
         parser.parse_args(['init'])
@@ -169,7 +170,7 @@ end''')
 
 
 @with_mocked_environment
-class CliListTestCase(BaseTestCase):
+class ListTestCase(BaseTestCase):
     def test_should_list_empty_commands(self):
         # given
         parser.parse_args(['init'])
@@ -240,7 +241,7 @@ class CliListTestCase(BaseTestCase):
 @mock.patch('command_reminder.cli.parser.sys.stdin.readlines')
 @mock.patch('command_reminder.common.get_timestamp')
 @with_mocked_environment
-class TestLoadCommandsListCase(BaseTestCase):
+class LoadCommandsListTestCase(BaseTestCase):
 
     def test_should_load_single_command_to_history(self, get_timestamp_mock, stdin_mock):
         # given
@@ -283,3 +284,79 @@ class TestLoadCommandsListCase(BaseTestCase):
 - cmd: ssh somelogin@somemachine.domain.pl
   when: 1639436633
 ''')
+
+
+@with_mocked_environment
+class ListTagsTestCase(BaseTestCase):
+    def test_should_return_empty_tags_list(self):
+        # given
+        parser.parse_args(['init'])
+
+        with assert_stdout() as stdout:
+            # when
+            parser.parse_args(['tags'])
+
+            # then
+            self.assertEqual(len(stdout.output), 0)
+
+    def test_should_return_tags_list(self):
+        # given
+        parser.parse_args(['init'])
+        parser.parse_args(['record', '--name', 'mongo', '--command', 'mongo', '--tags', '#onduty,#mongo'])
+        parser.parse_args(
+            ['record', '--name', 'hermes', '--command', 'curl -X POST https://hermes.domain', '--tags', '#onduty '])
+
+        with assert_stdout() as stdout:
+            # when
+
+            parser.parse_args(['tags'])
+
+            # then
+            self.assertEqual(len(stdout.output), 2)
+            self.assertOutputContains(stdout.output, '#onduty')
+            self.assertOutputContains(stdout.output, '#mongo')
+
+
+@with_mocked_environment
+class RemoveCommandTestCase(BaseTestCase):
+    def test_should_remove_command(self):
+        # given
+        parser.parse_args(['init'])
+        parser.parse_args(['record', '--name', 'mongo', '--command', 'mongo', '--tags', '#mongo'])
+        parser.parse_args(
+            ['record', '--name', 'hermes', '--command', 'curl -X POST https://hermes.domain', '--tags',
+             '#onduty,#hermes'])
+
+        with assert_stdout() as stdout:
+            parser.parse_args(['list'])
+            self.assertEqual(len(stdout.output), 2)
+
+        self.assertTrue(os.path.exists(
+            f'/{TEST_PATH}/{REPOSITORIES_DIR_NAME}/{MAIN_REPOSITORY_DIR_NAME}/{FISH_FUNCTIONS_DIR_NAME}/hermes.fish'))
+
+        # when
+        parser.parse_args(['rm', '--command', 'hermes'])
+
+        # then
+        with assert_stdout() as stdout:
+            parser.parse_args(['list'])
+            self.assertEqual(len(stdout.output), 1)
+            self.assertOutputContains(stdout.output, 'mongo')
+
+        # and
+        self.assertFalse(os.path.exists(
+            f'/{TEST_PATH}/{REPOSITORIES_DIR_NAME}/{MAIN_REPOSITORY_DIR_NAME}/{FISH_FUNCTIONS_DIR_NAME}/hermes.fish'))
+
+        # and
+        with assert_stdout() as stdout:
+            parser.parse_args(['tags'])
+            self.assertEqual(len(stdout.output), 1)
+            self.assertOutputContains(stdout.output, '#mongo')
+
+    def test_should_raise_if_command_does_not_exists(self):
+        # given
+        parser.parse_args(['init'])
+
+        # expect
+        with self.assertRaisesRegex(InvalidArgumentException, 'Command notExisting does not exist'):
+            parser.parse_args(['rm', '--command', 'notExisting'])

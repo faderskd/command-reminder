@@ -32,3 +32,8 @@ class FoundCommandsDto:
 @dataclass
 class LoadCommandsListDto:
     commands: typing.List[str]
+
+
+@dataclass
+class RemoveCommandDto:
+    command_name: str

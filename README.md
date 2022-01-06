@@ -17,8 +17,8 @@ pip install command-reminder
 >
 > cr record --name "sed" --tags "#sed #macosx" --command "sed -i '' -e 's/source/target/g' file.txt"
 
-#### Show commands
-> cr show --tags #sed
+#### List commands
+> cr list --tags #sed
 
 #### Show tags
 > cr tags

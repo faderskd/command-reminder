@@ -9,12 +9,13 @@ import giturlparse
 from termcolor import colored
 
 from command_reminder import common
+from command_reminder.common import InvalidArgumentException
 from command_reminder.config.config import Configuration, FISH_FUNCTIONS_PATH_ENV, HISTORY_LOAD_FILE_NAME
 from command_reminder.operations.dto import OperationData, InitOperationDto, RecordCommandOperationDto, \
-    ListOperationDto, FoundCommandsDto, LoadCommandsListDto
+    ListOperationDto, FoundCommandsDto, LoadCommandsListDto, RemoveCommandDto
 
 
-def read_file_content(f):
+def read_file_content(f) -> typing.Dict[str, typing.List[typing.List[str]]]:
     s = f.read()
     if not s:
         commands = {}
@@ -37,6 +38,10 @@ class Processor(ABC):
     def _create_empty_file(path: str) -> None:
         if not os.path.exists(path):
             with open(path, 'w+'): ...
+
+    @staticmethod
+    def _print_colored(text):
+        print(colored(text, 'blue'))
 
 
 class InitRepositoryProcessor(Processor):
@@ -105,12 +110,12 @@ class RecordCommandProcessor(Processor):
         with open(self._config.main_repository_commands_file, flags) as f:
             commands = read_file_content(f)
             f.seek(0)
-            commands[data.name] = (data.command, data.tags)
+            commands[data.name] = (data.command, self._preprocess_tags(data.tags))
             json.dump(commands, f)
             f.truncate()
 
     def _create_fish_function(self, data: RecordCommandOperationDto) -> None:
-        fish_func_file = os.path.join(self._config.main_repository_fish_functions, data.name + '.fish')
+        fish_func_file = self._config.fish_function_file(data.name)
         if os.path.exists(fish_func_file):
             return
         with open(fish_func_file, 'w+') as f:
@@ -119,21 +124,26 @@ function {data.name}
     set color {self.ECHO_COLOR}; echo '{data.command}'
 end''')
 
+    @staticmethod
+    def _preprocess_tags(tags: typing.List[str]) -> typing.List[str]:
+        stripped = [t.strip() for t in tags]
+        return [t for t in stripped if t]
+
 
 class ListCommandsProcessor(Processor):
     def __init__(self, config: Configuration):
         self._config = config
 
-    def process(self, operation: OperationData) -> None:
-        if not isinstance(operation, ListOperationDto):
+    def process(self, data: OperationData) -> None:
+        if not isinstance(data, ListOperationDto):
             return
         if not os.path.exists(self._config.main_repository_commands_file):
             self._print_colored([])
 
         with open(self._config.main_repository_commands_file, 'r') as f:
             commands = read_file_content(f)
-            results = self._search_for_commands_with_tags(commands, operation.tags)
-        self._print_results(results, operation.pretty)
+            results = self._search_for_commands_with_tags(commands, data.tags)
+        self._print_results(results, data.pretty)
 
     @staticmethod
     def _search_for_commands_with_tags(commands: typing.Dict[str, typing.List[typing.List[str]]],
@@ -153,10 +163,6 @@ class ListCommandsProcessor(Processor):
             else:
                 print(f"{r.name}: {r.command}")
 
-    @staticmethod
-    def _print_colored(text):
-        print(colored(text, 'blue'))
-
 
 class LoadCommandProcessor(Processor):
     COMMAND_LINE_REGEX = "[\\w+-]+: (.+)"
@@ -164,10 +170,10 @@ class LoadCommandProcessor(Processor):
     def __init__(self, config: Configuration):
         self._config = config
 
-    def process(self, operation: OperationData) -> None:
-        if not isinstance(operation, LoadCommandsListDto):
+    def process(self, data: OperationData) -> None:
+        if not isinstance(data, LoadCommandsListDto):
             return
-        self._populate_fish_history(operation.commands)
+        self._populate_fish_history(data.commands)
 
     def _populate_fish_history(self, commands: typing.List[str]):
         with open(self._config.fish_history_file, 'a') as f:
@@ -184,10 +190,47 @@ class LoadCommandProcessor(Processor):
                 yield match.group(1)
 
 
-class CompoundProcessor(Processor):
-    def __init__(self, processors: typing.List[Processor]):
-        self.processors = processors
+class TagsProcessor(Processor):
+    def __init__(self, config: Configuration):
+        super().__init__()
+        self.config = config
 
-    def process(self, operation: OperationData) -> None:
-        for p in self.processors:
-            p.process(operation)
+    def process(self, _: OperationData) -> None:
+        with open(self.config.main_repository_commands_file) as f:
+            commands = read_file_content(f)
+            all_tags = set()
+            for (name, (content, tags)) in commands.items():
+                for t in tags:
+                    all_tags.add(t)
+        for t in all_tags:
+            self._print_colored(t)
+
+
+class RemoveCommandProcessor(Processor):
+    def __init__(self, config: Configuration):
+        super().__init__()
+        self._config = config
+
+    def process(self, data: OperationData) -> None:
+        if not isinstance(data, RemoveCommandDto):
+            return
+        if not os.path.exists(self._config.main_repository_commands_file):
+            return
+        self.remove_command(data)
+        self.remove_fish_function(data)
+
+    def remove_command(self, data: RemoveCommandDto):
+        with open(self._config.main_repository_commands_file, 'r+') as f:
+            commands = read_file_content(f)
+            if data.command_name in commands:
+                del commands[data.command_name]
+            else:
+                raise InvalidArgumentException(f'Command {data.command_name} does not exist.')
+            f.seek(0)
+            json.dump(commands, f)
+            f.truncate()
+
+    def remove_fish_function(self, data: RemoveCommandDto):
+        func_file = self._config.fish_function_file(data.command_name)
+        if os.path.exists:
+            os.remove(func_file)
