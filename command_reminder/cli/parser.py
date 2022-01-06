@@ -3,21 +3,15 @@ import sys
 import argparse
 from argparse import ArgumentParser
 
+from command_reminder.cli.processors import Operations
 from command_reminder.operations.dto import InitOperationDto, RecordCommandOperationDto, ListOperationDto, \
-    LoadCommandsListDto
+    LoadCommandsListDto, RemoveCommandDto
 from command_reminder.config.config import DEFAULT_REPOSITORY_DIR
 
 from command_reminder.cli.initializer import AppContext
 
 TAGS_SPLITTER = '[\\s,]+'
 NAME_REPLACER = '[\\s+-]'
-
-
-class Operations:
-    INIT = "init"
-    RECORD = "record"
-    LIST = "list"
-    LOAD = "load"
 
 
 def parse_args(raw_args) -> None:
@@ -27,17 +21,19 @@ def parse_args(raw_args) -> None:
     operation = args.operation
 
     if operation == Operations.INIT:
-        app_context.compound_processor.process(InitOperationDto(repo=args.repo))
+        app_context.compound_processor.process(operation, InitOperationDto(repo=args.repo))
     elif operation == Operations.RECORD:
-        app_context.compound_processor.process(RecordCommandOperationDto(
+        app_context.compound_processor.process(operation, RecordCommandOperationDto(
             command=args.command, name=re.sub(NAME_REPLACER, '_', args.name), tags=re.split(TAGS_SPLITTER, args.tags)))
     elif operation == Operations.LIST:
-        app_context.compound_processor.process(
-            ListOperationDto(tags=re.split(TAGS_SPLITTER, args.tags) if args.tags else [], pretty=args.pretty))
+        app_context.compound_processor.process(operation, ListOperationDto(
+            tags=re.split(TAGS_SPLITTER, args.tags) if args.tags else [], pretty=args.pretty))
     elif operation == Operations.LOAD:
-        app_context.compound_processor.process(
-            LoadCommandsListDto(commands=sys.stdin.readlines())
-        )
+        app_context.compound_processor.process(operation, LoadCommandsListDto(commands=sys.stdin.readlines()))
+    elif operation == Operations.TAGS:
+        app_context.compound_processor.process(operation, None)
+    elif operation == Operations.REMOVE:
+        app_context.compound_processor.process(operation, RemoveCommandDto(command_name=args.command))
     else:
         parser.print_help()
 
@@ -48,33 +44,42 @@ def define_parser():
     init_parser = subparsers.add_parser(Operations.INIT, description="Initializes command-reminder project")
     record_parser = subparsers.add_parser(Operations.RECORD, description="Adds command to registry")
     list_parser = subparsers.add_parser(Operations.LIST, description="Adds command to registry")
+    remove_parser = subparsers.add_parser(Operations.REMOVE, description="Removes a command")
     subparsers.add_parser(Operations.LOAD, description="Loads command to history")
+    subparsers.add_parser(Operations.TAGS, description="Lists available tags")
     _init_subparser(init_parser)
     _record_subparser(record_parser)
     _list_subparser(list_parser)
+    _remove_subparser(remove_parser)
     return parser
 
 
 def _init_subparser(parser: ArgumentParser) -> None:
-    parser.add_argument('-r', '--repo', type=str, default="",
+    parser.add_argument('-r', '--repo', type=str, default='',
                         help=f'Repository to which saving commands. If empty default "~/{DEFAULT_REPOSITORY_DIR}" will be used')
 
 
 def _record_subparser(parser: ArgumentParser) -> None:
     parser.add_argument('-n', '--name', type=str,
-                        help='Name of the command. It will be used to reference it during different operations.')
-    parser.add_argument('-t', '--tags', type=str, default="",
+                        help='Name of the command. It will be used to reference it during different operations.',
+                        required=True)
+    parser.add_argument('-t', '--tags', type=str, default='',
                         help='Tags to search command for.')
     parser.add_argument('-c', '--command', type=str,
-                        help='Command to record')
+                        help='Command to record', required=True)
 
 
 def _list_subparser(parser: ArgumentParser) -> None:
     parser.add_argument('-t', '--tags', type=str,
-                        help='Tags to search commands for.', default="")
+                        help='Tags to search commands for.', default='')
     parser.add_argument('-p', '--pretty', action='store_true')
 
 
+def _remove_subparser(parser: ArgumentParser) -> None:
+    parser.add_argument('-c', '--command', type=str,
+                        help='Command name to remove.', required=True)
+
+
 if __name__ == '__main__':
-    sys.argv[0] = "command-reminder"
+    sys.argv[0] = 'command-reminder'
     parse_args(sys.argv[1:])
