@@ -5,7 +5,7 @@ from contextlib import redirect_stdout
 from typing import List
 
 from command_reminder.config.config import FISH_HISTORY_DIR, FISH_HISTORY_FILE_NAME
-from tests.helpers import TEST_PATH
+from tests.helpers import TEST_TMP_DIR_PATH
 
 
 class StdoutRedirectionContext:
@@ -34,7 +34,8 @@ def assert_stdout() -> StdoutRedirectionContext:
 
 class BaseTestCase(unittest.TestCase):
     def setUp(self) -> None:
-        history_dir = os.path.join(TEST_PATH, FISH_HISTORY_DIR)
+        self._remove_test_tmp_dir()
+        history_dir = os.path.join(TEST_TMP_DIR_PATH, FISH_HISTORY_DIR)
         self.history_file = os.path.join(history_dir, FISH_HISTORY_FILE_NAME)
         os.makedirs(history_dir)
         with open(self.history_file, 'w') as f:
@@ -44,8 +45,11 @@ class BaseTestCase(unittest.TestCase):
 ''')
 
     def tearDown(self) -> None:
+        self._remove_test_tmp_dir()
+
+    def _remove_test_tmp_dir(self):
         try:
-            shutil.rmtree(TEST_PATH)
+            shutil.rmtree(TEST_TMP_DIR_PATH)
         except:
             pass
 

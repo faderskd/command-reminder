@@ -37,3 +37,8 @@ class LoadCommandsListDto:
 @dataclass
 class RemoveCommandDto:
     command_name: str
+
+
+@dataclass
+class PullExternalRepositoryDto:
+    repo: str

@@ -3,7 +3,7 @@ from unittest import mock
 
 from command_reminder.cli import parser
 from tests.common import BaseTestCase
-from tests.helpers import with_mocked_environment, TEST_PATH
+from tests.helpers import with_mocked_environment, TEST_TMP_DIR_PATH
 
 
 
@@ -21,7 +21,7 @@ class LoadCommandsListTestCase(BaseTestCase):
         parser.parse_args(['load'])
 
         # then
-        history_file = os.path.join(TEST_PATH, '.local/share/fish/fish_history')
+        history_file = os.path.join(TEST_TMP_DIR_PATH, '.local/share/fish/fish_history')
         self.assertFileContent(history_file, f'''
 - cmd: brew install fish
   when: 1639436632
@@ -42,7 +42,7 @@ class LoadCommandsListTestCase(BaseTestCase):
         parser.parse_args(['load'])
 
         # then
-        history_file = os.path.join(TEST_PATH, '.local/share/fish/fish_history')
+        history_file = os.path.join(TEST_TMP_DIR_PATH, '.local/share/fish/fish_history')
         self.assertFileContent(history_file, f'''
 - cmd: brew install fish
   when: 1639436632

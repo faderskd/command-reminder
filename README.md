@@ -54,13 +54,11 @@ pip install .
         main/
             commands.txt
             fish/
-        extensions/
+        external/
             ext1/
-                main/
-                    commands.txt
-                    fish/
+                commands.txt
+                fish/
             ext2/
-                main/
-                    commands.txt
-                    fish/
+                commands.txt
+                fish/
 ``` 

@@ -9,10 +9,11 @@ import giturlparse
 from termcolor import colored
 
 from command_reminder import common
-from command_reminder.common import InvalidArgumentException
-from command_reminder.config.config import Configuration, FISH_FUNCTIONS_PATH_ENV, HISTORY_LOAD_FILE_NAME
+from command_reminder.config.config import Configuration, FISH_FUNCTIONS_PATH_ENV, HISTORY_LOAD_FILE_NAME, \
+    FISH_FUNCTIONS_DIR_NAME
+from command_reminder.operations.common import InvalidArgumentException, GitRepository
 from command_reminder.operations.dto import OperationData, InitOperationDto, RecordCommandOperationDto, \
-    ListOperationDto, FoundCommandsDto, LoadCommandsListDto, RemoveCommandDto
+    ListOperationDto, FoundCommandsDto, LoadCommandsListDto, RemoveCommandDto, PullExternalRepositoryDto
 
 
 def read_file_content(f) -> typing.Dict[str, typing.List[typing.List[str]]]:
@@ -45,8 +46,9 @@ class Processor(ABC):
 
 
 class InitRepositoryProcessor(Processor):
-    def __init__(self, config: Configuration):
+    def __init__(self, config: Configuration, git_repo: GitRepository):
         self._config = config
+        self._git_repo = git_repo
 
     def process(self, data: OperationData) -> None:
         if not isinstance(data, InitOperationDto):
@@ -54,20 +56,16 @@ class InitRepositoryProcessor(Processor):
         self._validate(data)
         self._create_dir(self._config.main_repository_fish_functions)
         self._create_empty_file(self._config.main_repository_commands_file)
-        self._init_git_repo(self._config.base_dir, data.repo)
+        self._init_git_repo(self._config.main_repository_dir, data.repo)
         self._create_load_history_alias()
         self._generate_init_script()
 
-    @staticmethod
-    def _validate(data: InitOperationDto) -> None:
-        if data.repo and not giturlparse.validate(data.repo):
-            raise common.InvalidArgumentException("Invalid git repository url")
+    def _validate(self, data: InitOperationDto) -> None:
+        if data.repo:
+            self._git_repo.validate(data.repo)
 
-    @staticmethod
-    def _init_git_repo(directory: str, repo: str) -> None:
-        if repo:
-            subprocess.run([f'cd {directory} && git init && git remote add origin {repo}'],
-                           shell=True, check=True)
+    def _init_git_repo(self, directory: str, repo: str) -> None:
+        self._git_repo.init_repo(directory, repo)
 
     def _generate_init_script(self) -> None:
         self._script_setting_functions_dir_to_search_path()
@@ -115,7 +113,7 @@ class RecordCommandProcessor(Processor):
             f.truncate()
 
     def _create_fish_function(self, data: RecordCommandOperationDto) -> None:
-        fish_func_file = self._config.fish_function_file(data.name)
+        fish_func_file = self._config.internal_fish_function_file(data.name)
         if os.path.exists(fish_func_file):
             return
         with open(fish_func_file, 'w+') as f:
@@ -231,6 +229,28 @@ class RemoveCommandProcessor(Processor):
             f.truncate()
 
     def remove_fish_function(self, data: RemoveCommandDto):
-        func_file = self._config.fish_function_file(data.command_name)
+        func_file = self._config.internal_fish_function_file(data.command_name)
         if os.path.exists:
             os.remove(func_file)
+
+
+class PullExternalRepoProcessor(Processor):
+    def __init__(self, config: Configuration, git_repo: GitRepository):
+        self._config = config
+        self._git_repo = git_repo
+
+    def process(self, data: OperationData) -> None:
+        if not isinstance(data, PullExternalRepositoryDto):
+            return
+        parsed_repo = self._git_repo.validate(data.repo)
+        external_repo_directory = self.get_target_dir_path(parsed_repo)
+        self.prepare_external_repo_dir(data, external_repo_directory)
+
+    def prepare_external_repo_dir(self, data, external_repo_directory):
+        self._create_dir(external_repo_directory)
+        self._git_repo.init_repo(external_repo_directory, data.repo)
+
+    def get_target_dir_path(self, parsed_repo):
+        external_repo_dir_name = (parsed_repo.owner + '_' + parsed_repo.name).replace('-', '_')
+        target_directory = os.path.join(self._config.external_repository_directory(external_repo_dir_name))
+        return target_directory

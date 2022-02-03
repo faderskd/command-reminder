@@ -1,7 +1,7 @@
 import os
 from dataclasses import dataclass
 
-from command_reminder.common import InvalidArgumentException
+from command_reminder.operations.common import InvalidArgumentException
 
 COMMAND_REMINDER_DIR_ENV = "COMMAND_REMINDER_DIR"
 FISH_FUNCTIONS_PATH_ENV = 'fish_function_path'
@@ -12,7 +12,6 @@ REPOSITORIES_DIR_NAME = 'repositories'
 MAIN_REPOSITORY_DIR_NAME = 'main'
 EXTERNAL_REPOSITORIES_DIR_NAME = 'external'
 COMMANDS_FILE_NAME = 'commands.json'
-EXTENSIONS_REPOSITORY_DIR_NAME = 'extensions'
 FISH_FUNCTIONS_DIR_NAME = 'fish'
 FISH_HISTORY_DIR = '.local/share/fish'
 FISH_HISTORY_FILE_NAME = 'fish_history'
@@ -57,8 +56,11 @@ class Configuration:
         home = os.getenv(HOME_DIR_ENV)
         return os.path.join(home, FISH_HISTORY_DIR, FISH_HISTORY_FILE_NAME)
 
-    def fish_function_file(self, command_name: str) -> str:
+    def internal_fish_function_file(self, command_name: str) -> str:
         return os.path.join(self.main_repository_fish_functions, command_name + '.fish')
+
+    def external_repository_directory(self, dir_name) -> str:
+        return os.path.join(self.repositories_dir, EXTERNAL_REPOSITORIES_DIR_NAME, dir_name)
 
     @staticmethod
     def _validate(home: str):

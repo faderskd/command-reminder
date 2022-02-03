@@ -1,14 +1,14 @@
 import os
 from unittest import mock
 
-from command_reminder.common import InvalidArgumentException
 
 from command_reminder.cli import parser
 from command_reminder.config.config import COMMAND_REMINDER_DIR_ENV, HOME_DIR_ENV, REPOSITORIES_DIR_NAME, \
     MAIN_REPOSITORY_DIR_NAME, COMMANDS_FILE_NAME, FISH_FUNCTIONS_DIR_NAME, FISH_FUNCTIONS_PATH_ENV, \
     HISTORY_LOAD_FILE_NAME
+from command_reminder.operations.common import InvalidArgumentException
 from tests.common import BaseTestCase, assert_stdout
-from tests.helpers import with_mocked_environment, TEST_PATH
+from tests.helpers import with_mocked_environment, TEST_TMP_DIR_PATH
 
 
 @with_mocked_environment
@@ -20,10 +20,10 @@ class InitTestCase(BaseTestCase):
 
         # then
         self.assertTrue(os.path.exists(
-            f'/{TEST_PATH}/{REPOSITORIES_DIR_NAME}/{MAIN_REPOSITORY_DIR_NAME}/{FISH_FUNCTIONS_DIR_NAME}'))
+            f'/{TEST_TMP_DIR_PATH}/{REPOSITORIES_DIR_NAME}/{MAIN_REPOSITORY_DIR_NAME}/{FISH_FUNCTIONS_DIR_NAME}'))
         self.assertTrue(os.path.exists(
-            f'/{TEST_PATH}/{REPOSITORIES_DIR_NAME}/{MAIN_REPOSITORY_DIR_NAME}/{COMMANDS_FILE_NAME}'))
-        self.assertTrue(os.path.exists(os.path.join(TEST_PATH, ".git")))
+            f'/{TEST_TMP_DIR_PATH}/{REPOSITORIES_DIR_NAME}/{MAIN_REPOSITORY_DIR_NAME}/{COMMANDS_FILE_NAME}'))
+        self.assertTrue(os.path.exists(os.path.join(TEST_TMP_DIR_PATH, REPOSITORIES_DIR_NAME, MAIN_REPOSITORY_DIR_NAME, ".git")))
 
     def test_should_init_directory_without_github_repository_given(self):
         # when
@@ -31,9 +31,9 @@ class InitTestCase(BaseTestCase):
 
         # then
         self.assertTrue(os.path.exists(
-            f'/{TEST_PATH}/{REPOSITORIES_DIR_NAME}/{MAIN_REPOSITORY_DIR_NAME}/{FISH_FUNCTIONS_DIR_NAME}'))
+            f'/{TEST_TMP_DIR_PATH}/{REPOSITORIES_DIR_NAME}/{MAIN_REPOSITORY_DIR_NAME}/{FISH_FUNCTIONS_DIR_NAME}'))
         self.assertTrue(os.path.exists(
-            f'/{TEST_PATH}/{REPOSITORIES_DIR_NAME}/{MAIN_REPOSITORY_DIR_NAME}/{COMMANDS_FILE_NAME}'))
+            f'/{TEST_TMP_DIR_PATH}/{REPOSITORIES_DIR_NAME}/{MAIN_REPOSITORY_DIR_NAME}/{COMMANDS_FILE_NAME}'))
         self.assertFalse(os.path.exists(os.path.join(os.environ[COMMAND_REMINDER_DIR_ENV], ".git")))
 
     def test_should_return_init_script(self):
@@ -41,9 +41,9 @@ class InitTestCase(BaseTestCase):
         with assert_stdout() as stdout:
             parser.parse_args(['init'])
             self.assertOutputContains(stdout.output,
-                                      f'set -gx {FISH_FUNCTIONS_PATH_ENV} ${FISH_FUNCTIONS_PATH_ENV} {TEST_PATH}/{REPOSITORIES_DIR_NAME}/{MAIN_REPOSITORY_DIR_NAME}/{FISH_FUNCTIONS_DIR_NAME}')
+                                      f'set -gx {FISH_FUNCTIONS_PATH_ENV} ${FISH_FUNCTIONS_PATH_ENV} {TEST_TMP_DIR_PATH}/{REPOSITORIES_DIR_NAME}/{MAIN_REPOSITORY_DIR_NAME}/{FISH_FUNCTIONS_DIR_NAME}')
 
-    @mock.patch.dict('os.environ', {COMMAND_REMINDER_DIR_ENV: TEST_PATH, HOME_DIR_ENV: ""})
+    @mock.patch.dict('os.environ', {COMMAND_REMINDER_DIR_ENV: TEST_TMP_DIR_PATH, HOME_DIR_ENV: ""})
     def test_should_throw_error_when_home_env_is_not_set(self):
         with self.assertRaisesRegex(InvalidArgumentException, '\\$HOME environment variable must be set'):
             # when
@@ -65,7 +65,7 @@ class InitTestCase(BaseTestCase):
         parser.parse_args(['init'])
 
         # then
-        alias_function = os.path.join(TEST_PATH, REPOSITORIES_DIR_NAME, MAIN_REPOSITORY_DIR_NAME,
+        alias_function = os.path.join(TEST_TMP_DIR_PATH, REPOSITORIES_DIR_NAME, MAIN_REPOSITORY_DIR_NAME,
                                       FISH_FUNCTIONS_DIR_NAME, HISTORY_LOAD_FILE_NAME)
 
         # and

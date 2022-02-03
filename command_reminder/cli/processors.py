@@ -5,12 +5,13 @@ from command_reminder.operations.processors import Processor
 
 
 class Operations:
-    INIT = "init"
-    RECORD = "record"
-    LIST = "list"
-    LOAD = "load"
-    TAGS = "tags"
-    REMOVE = "rm"
+    INIT = 'init'
+    RECORD = 'record'
+    LIST = 'list'
+    LOAD = 'load'
+    TAGS = 'tags'
+    REMOVE = 'rm'
+    PULL = 'pull'
 
 
 class CompoundProcessor:

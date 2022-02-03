@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 
 from command_reminder.cli.processors import Operations
 from command_reminder.operations.dto import InitOperationDto, RecordCommandOperationDto, ListOperationDto, \
-    LoadCommandsListDto, RemoveCommandDto
+    LoadCommandsListDto, RemoveCommandDto, PullExternalRepositoryDto
 from command_reminder.config.config import DEFAULT_REPOSITORY_DIR
 
 from command_reminder.cli.initializer import AppContext
@@ -34,6 +34,8 @@ def parse_args(raw_args) -> None:
         app_context.compound_processor.process(operation, None)
     elif operation == Operations.REMOVE:
         app_context.compound_processor.process(operation, RemoveCommandDto(command_name=args.command))
+    elif operation == Operations.PULL:
+        app_context.compound_processor.process(operation, PullExternalRepositoryDto(repo=args.repo))
     else:
         parser.print_help()
 
@@ -41,22 +43,24 @@ def parse_args(raw_args) -> None:
 def define_parser():
     parser = argparse.ArgumentParser(description='Command Reminder CLI')
     subparsers = parser.add_subparsers(help="Command Reminder command to execute", dest="operation")
-    init_parser = subparsers.add_parser(Operations.INIT, description="Initializes command-reminder project")
-    record_parser = subparsers.add_parser(Operations.RECORD, description="Adds command to registry")
-    list_parser = subparsers.add_parser(Operations.LIST, description="Adds command to registry")
+    init_parser = subparsers.add_parser(Operations.INIT, description='Initializes command-reminder project')
+    record_parser = subparsers.add_parser(Operations.RECORD, description='Adds command to registry')
+    list_parser = subparsers.add_parser(Operations.LIST, description='Adds command to registry')
     remove_parser = subparsers.add_parser(Operations.REMOVE, description="Removes a command")
-    subparsers.add_parser(Operations.LOAD, description="Loads command to history")
-    subparsers.add_parser(Operations.TAGS, description="Lists available tags")
+    subparsers.add_parser(Operations.LOAD, description='Loads command to history')
+    subparsers.add_parser(Operations.TAGS, description='Lists available tags')
+    pull_subparser = subparsers.add_parser(Operations.PULL, description='Pulls external commands repository')
     _init_subparser(init_parser)
     _record_subparser(record_parser)
     _list_subparser(list_parser)
     _remove_subparser(remove_parser)
+    _pull_subparser(pull_subparser)
     return parser
 
 
 def _init_subparser(parser: ArgumentParser) -> None:
     parser.add_argument('-r', '--repo', type=str, default='',
-                        help=f'Repository to which saving commands. If empty default "~/{DEFAULT_REPOSITORY_DIR}" will be used')
+                        help=f'Repository to which save commands. If empty default "~/{DEFAULT_REPOSITORY_DIR}" will be used')
 
 
 def _record_subparser(parser: ArgumentParser) -> None:
@@ -78,6 +82,11 @@ def _list_subparser(parser: ArgumentParser) -> None:
 def _remove_subparser(parser: ArgumentParser) -> None:
     parser.add_argument('-c', '--command', type=str,
                         help='Command name to remove.', required=True)
+
+
+def _pull_subparser(parser: ArgumentParser) -> None:
+    parser.add_argument('-r', '--repo', type=str,
+                        help='Pulls external commands repository.', required=True)
 
 
 if __name__ == '__main__':

@@ -1,11 +1,11 @@
 import os
 
-from command_reminder.common import InvalidArgumentException
 
 from command_reminder.cli import parser
 from command_reminder.config.config import REPOSITORIES_DIR_NAME, MAIN_REPOSITORY_DIR_NAME, FISH_FUNCTIONS_DIR_NAME
+from command_reminder.operations.common import InvalidArgumentException
 from tests.common import BaseTestCase, assert_stdout
-from tests.helpers import with_mocked_environment, TEST_PATH
+from tests.helpers import with_mocked_environment, TEST_TMP_DIR_PATH
 
 
 @with_mocked_environment
@@ -23,7 +23,7 @@ class RemoveCommandTestCase(BaseTestCase):
             self.assertEqual(len(stdout.output), 2)
 
         self.assertTrue(os.path.exists(
-            f'/{TEST_PATH}/{REPOSITORIES_DIR_NAME}/{MAIN_REPOSITORY_DIR_NAME}/{FISH_FUNCTIONS_DIR_NAME}/hermes.fish'))
+            f'/{TEST_TMP_DIR_PATH}/{REPOSITORIES_DIR_NAME}/{MAIN_REPOSITORY_DIR_NAME}/{FISH_FUNCTIONS_DIR_NAME}/hermes.fish'))
 
         # when
         parser.parse_args(['rm', '--command', 'hermes'])
@@ -36,7 +36,7 @@ class RemoveCommandTestCase(BaseTestCase):
 
         # and
         self.assertFalse(os.path.exists(
-            f'/{TEST_PATH}/{REPOSITORIES_DIR_NAME}/{MAIN_REPOSITORY_DIR_NAME}/{FISH_FUNCTIONS_DIR_NAME}/hermes.fish'))
+            f'/{TEST_TMP_DIR_PATH}/{REPOSITORIES_DIR_NAME}/{MAIN_REPOSITORY_DIR_NAME}/{FISH_FUNCTIONS_DIR_NAME}/hermes.fish'))
 
         # and
         with assert_stdout() as stdout:
