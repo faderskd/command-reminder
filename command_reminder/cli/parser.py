@@ -4,11 +4,15 @@ import argparse
 from argparse import ArgumentParser
 
 from command_reminder.cli.processors import Operations
-from command_reminder.operations.dto import InitOperationDto, RecordCommandOperationDto, ListOperationDto, \
-    LoadCommandsListDto, RemoveCommandDto, PullExternalRepositoryDto
 from command_reminder.config.config import DEFAULT_REPOSITORY_DIR
 
 from command_reminder.cli.initializer import AppContext
+from command_reminder.operations.init_repository import InitOperationDto
+from command_reminder.operations.list_commands import ListOperationDto
+from command_reminder.operations.load_command import LoadCommandsListDto
+from command_reminder.operations.pull_external_repo import PullExternalRepositoryDto
+from command_reminder.operations.record_command import RecordCommandOperationDto
+from command_reminder.operations.remove_command import RemoveCommandDto
 
 TAGS_SPLITTER = '[\\s,]+'
 NAME_REPLACER = '[\\s+-]'

@@ -1,7 +1,6 @@
 import typing
 
-from command_reminder.operations.dto import OperationData
-from command_reminder.operations.processors import Processor
+from command_reminder.operations.base_processors import Processor, OperationData
 
 
 class Operations:

@@ -59,8 +59,11 @@ class Configuration:
     def internal_fish_function_file(self, command_name: str) -> str:
         return os.path.join(self.main_repository_fish_functions, command_name + '.fish')
 
+    def external_repositories_directory(self) -> str:
+        return os.path.join(self.repositories_dir, EXTERNAL_REPOSITORIES_DIR_NAME)
+
     def external_repository_directory(self, dir_name) -> str:
-        return os.path.join(self.repositories_dir, EXTERNAL_REPOSITORIES_DIR_NAME, dir_name)
+        return os.path.join(self.external_repositories_directory(), dir_name)
 
     @staticmethod
     def _validate(home: str):
