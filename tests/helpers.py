@@ -2,7 +2,7 @@ import os
 import shutil
 from unittest import mock
 
-from command_reminder.operations.common import GitRepository
+from command_reminder.operations.common.git import GitRepository
 
 TEST_PATH = os.path.join(os.getcwd())
 TEST_TMP_DIR_PATH = os.path.join(os.getcwd(), 'tmp')

@@ -55,4 +55,17 @@ class PullExternalRepositoryTestCase(BaseTestCase):
             self.assertOutputContains(stdout.output, 'external_command: some_external_command')
 
     def test_should_list_external_repos_tags_merge_with_main_tags(self):
-        pass
+        # given
+        parser.parse_args(['init'])
+        parser.parse_args(['pull', '--repo', 'https://github.com/faderskd/common-commands'])
+        parser.parse_args(
+            ['record', '--name', 'internal_command', '--command', 'some_internal_command', '--tags', '#internal'])
+
+        with assert_stdout() as stdout:
+            # when
+            parser.parse_args(['tags'])
+
+            # then
+            self.assertTrue(len(stdout.output), 2)
+            self.assertOutputContains(stdout.output, '#internal')
+            self.assertOutputContains(stdout.output, '#external')

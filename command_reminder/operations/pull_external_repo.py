@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from command_reminder.config.config import Configuration
 from command_reminder.operations.base_processors import Processor, OperationData
-from command_reminder.operations.common import GitRepository
+from command_reminder.operations.common.git import GitRepository
 
 
 @dataclass

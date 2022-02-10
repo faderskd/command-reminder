@@ -3,9 +3,7 @@ from dataclasses import dataclass
 
 import giturlparse
 
-
-class InvalidArgumentException(ValueError):
-    pass
+from command_reminder.operations.common.exceptions import InvalidArgumentException
 
 
 @dataclass

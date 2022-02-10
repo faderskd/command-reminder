@@ -6,7 +6,7 @@ from command_reminder.cli import parser
 from command_reminder.config.config import COMMAND_REMINDER_DIR_ENV, HOME_DIR_ENV, REPOSITORIES_DIR_NAME, \
     MAIN_REPOSITORY_DIR_NAME, COMMANDS_FILE_NAME, FISH_FUNCTIONS_DIR_NAME, FISH_FUNCTIONS_PATH_ENV, \
     HISTORY_LOAD_FILE_NAME
-from command_reminder.operations.common import InvalidArgumentException
+from command_reminder.operations.common.exceptions import InvalidArgumentException
 from tests.common import BaseTestCase, assert_stdout
 from tests.helpers import with_mocked_environment, TEST_TMP_DIR_PATH
 

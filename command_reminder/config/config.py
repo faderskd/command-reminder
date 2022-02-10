@@ -1,7 +1,7 @@
 import os
 from dataclasses import dataclass
 
-from command_reminder.operations.common import InvalidArgumentException
+from command_reminder.operations.common.exceptions import InvalidArgumentException
 
 COMMAND_REMINDER_DIR_ENV = "COMMAND_REMINDER_DIR"
 FISH_FUNCTIONS_PATH_ENV = 'fish_function_path'

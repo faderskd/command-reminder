@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from command_reminder.config.config import Configuration
 from command_reminder.operations.base_processors import Processor, read_file_content, OperationData
-from command_reminder.operations.common import InvalidArgumentException
+from command_reminder.operations.common.exceptions import InvalidArgumentException
 
 
 @dataclass
