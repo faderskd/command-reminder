@@ -24,8 +24,8 @@ class InitRepositoryProcessor(Processor):
             return
         self._validate(data)
         self._create_dir(self._config.main_repository_fish_functions)
-        self._create_empty_file(self._config.main_repository_commands_file)
         self._init_git_repo(self._config.main_repository_dir, data.repo)
+        self._create_empty_file(self._config.main_repository_commands_file)
         self._create_load_history_alias()
         self._generate_init_script()
 

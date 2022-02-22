@@ -3,6 +3,7 @@ import subprocess
 from dataclasses import dataclass
 
 import giturlparse
+from command_reminder.config.config import FISH_FUNCTIONS_DIR_NAME, COMMANDS_FILE_NAME
 
 from command_reminder.operations.common.exceptions import InvalidArgumentException
 
@@ -30,15 +31,18 @@ class GitRepository:
     def pull_changes_from_remote(directory: str):
         subprocess.run([f'cd {directory} &&'
                         f' git pull origin main &&'
-                        f' git co main'],
+                        f' git checkout main'],
                        shell=True, check=True)
 
     @staticmethod
     def push_changes_to_remote(directory: str):
         subprocess.run([f'cd {directory} &&'
-                        f' co main &&'
-                        f' git commit -a -m "update repo" &&'
-                        f' git push origin main'])
+                        f' git checkout main &&'
+                        f' git add {FISH_FUNCTIONS_DIR_NAME}/* &&'
+                        f' git add {COMMANDS_FILE_NAME} &&'
+                        f' git commit -a -m \'update repo\' &&'
+                        f' git push origin main'],
+                       shell=True, check=True)
 
     @staticmethod
     def validate(repo: str) -> ParsedGitRepository:
