@@ -21,6 +21,10 @@ def pull_changes_mock(_, directory: str):
     create_fake_repo(directory)
 
 
+def push_changes_mock(_, _directory: str):
+    pass
+
+
 def create_fake_repo(directory: str):
     create_fake_commands_file(directory)
     create_fake_fish_dir(directory)

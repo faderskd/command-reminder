@@ -40,6 +40,8 @@ def parse_args(raw_args) -> None:
         app_context.compound_processor.process(operation, RemoveCommandDto(command_name=args.command))
     elif operation == Operations.PULL:
         app_context.compound_processor.process(operation, PullExternalRepositoryDto(repo=args.repo))
+    elif operation == Operations.PUSH:
+        app_context.compound_processor.process(operation, None)
     else:
         parser.print_help()
 
@@ -54,6 +56,7 @@ def define_parser():
     subparsers.add_parser(Operations.LOAD, description='Loads command to history')
     subparsers.add_parser(Operations.TAGS, description='Lists available tags')
     pull_subparser = subparsers.add_parser(Operations.PULL, description='Pulls external commands repository')
+    subparsers.add_parser(Operations.PUSH, description='Pushes changes to main repository')
     _init_subparser(init_parser)
     _record_subparser(record_parser)
     _list_subparser(list_parser)

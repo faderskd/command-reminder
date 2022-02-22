@@ -7,6 +7,7 @@ from command_reminder.operations.list_commands import ListCommandsProcessor
 from command_reminder.operations.list_tags import TagsProcessor
 from command_reminder.operations.load_command import LoadCommandProcessor
 from command_reminder.operations.pull_external_repo import PullExternalRepoProcessor
+from command_reminder.operations.push_commands import PushCommandsToRepo
 from command_reminder.operations.record_command import RecordCommandProcessor
 from command_reminder.operations.remove_command import RemoveCommandProcessor
 
@@ -22,6 +23,7 @@ class AppContext:
         tags_processor = TagsProcessor(self.config)
         remove_processor = RemoveCommandProcessor(self.config)
         pull_processor = PullExternalRepoProcessor(self.config, git_repository_manager)
+        push_processor = PushCommandsToRepo(self.config, git_repository_manager)
         self.compound_processor = CompoundProcessor([
             (Operations.INIT, init_processor),
             (Operations.RECORD, record_processor),
@@ -29,5 +31,6 @@ class AppContext:
             (Operations.LOAD, load_processor),
             (Operations.TAGS, tags_processor),
             (Operations.REMOVE, remove_processor),
-            (Operations.PULL, pull_processor)
+            (Operations.PULL, pull_processor),
+            (Operations.PUSH, push_processor)
         ])

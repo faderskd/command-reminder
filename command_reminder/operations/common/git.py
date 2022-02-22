@@ -1,3 +1,4 @@
+import os
 import subprocess
 from dataclasses import dataclass
 
@@ -27,9 +28,17 @@ class GitRepository:
 
     @staticmethod
     def pull_changes_from_remote(directory: str):
-        subprocess.run([directory, f'cd {directory} &&'
-                                   ' git pull origin master'],
+        subprocess.run([f'cd {directory} &&'
+                        f' git pull origin main &&'
+                        f' git co main'],
                        shell=True, check=True)
+
+    @staticmethod
+    def push_changes_to_remote(directory: str):
+        subprocess.run([f'cd {directory} &&'
+                        f' co main &&'
+                        f' git commit -a -m "update repo" &&'
+                        f' git push origin main'])
 
     @staticmethod
     def validate(repo: str) -> ParsedGitRepository:
@@ -37,3 +46,7 @@ class GitRepository:
         if not parsed.valid:
             raise InvalidArgumentException("Invalid git repository url")
         return ParsedGitRepository(parsed.owner, parsed.name)
+
+    @staticmethod
+    def is_git_repo(directory: str):
+        return '.git' in os.listdir(directory)

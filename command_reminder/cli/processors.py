@@ -11,6 +11,7 @@ class Operations:
     TAGS = 'tags'
     REMOVE = 'rm'
     PULL = 'pull'
+    PUSH = 'push'
 
 
 class CompoundProcessor:
