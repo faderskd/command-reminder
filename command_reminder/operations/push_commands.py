@@ -1,4 +1,4 @@
-from command_reminder.operations.common.exceptions import InvalidArgumentException
+from command_reminder.exceptions import InvalidArgumentException
 
 from command_reminder.operations.base_processors import Processor, OperationData
 

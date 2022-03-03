@@ -3,7 +3,7 @@ import os
 
 from command_reminder.cli import parser
 from command_reminder.config.config import REPOSITORIES_DIR_NAME, MAIN_REPOSITORY_DIR_NAME, FISH_FUNCTIONS_DIR_NAME
-from command_reminder.operations.common.exceptions import InvalidArgumentException
+from command_reminder.exceptions import InvalidArgumentException
 from tests.common import BaseTestCase, assert_stdout
 from tests.helpers import with_mocked_environment, TEST_TMP_DIR_PATH
 

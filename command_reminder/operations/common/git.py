@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import giturlparse
 from command_reminder.config.config import FISH_FUNCTIONS_DIR_NAME, COMMANDS_FILE_NAME
 
-from command_reminder.operations.common.exceptions import InvalidArgumentException
+from command_reminder.exceptions import InvalidArgumentException
 
 
 @dataclass
@@ -16,9 +16,8 @@ class ParsedGitRepository:
 
 class GitRepository:
     def init_repo(self, directory: str, repo: str) -> None:
-        if repo:
-            self.init_git(directory, repo)
-            self.pull_changes_from_remote(directory)
+        self.init_git(directory, repo)
+        self.pull_changes_from_remote(directory)
 
     @staticmethod
     def init_git(directory: str, repo: str):

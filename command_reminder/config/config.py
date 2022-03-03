@@ -1,7 +1,7 @@
 import os
 from dataclasses import dataclass
 
-from command_reminder.operations.common.exceptions import InvalidArgumentException
+from command_reminder.exceptions import InvalidArgumentException
 
 COMMAND_REMINDER_DIR_ENV = "COMMAND_REMINDER_DIR"
 FISH_FUNCTIONS_PATH_ENV = 'fish_function_path'
@@ -16,6 +16,7 @@ FISH_FUNCTIONS_DIR_NAME = 'fish'
 FISH_HISTORY_DIR = '.local/share/fish'
 FISH_HISTORY_FILE_NAME = 'fish_history'
 HISTORY_LOAD_FILE_NAME = 'h.fish'
+CONFIG_FILE_NAME = 'config.yaml'
 
 
 @dataclass
@@ -24,10 +25,11 @@ class Configuration:
 
     @staticmethod
     def load_config():
-        return Configuration(Configuration.base_dir())
+        base_dir = Configuration.build_base_dir()
+        return Configuration(base_dir)
 
     @staticmethod
-    def base_dir() -> str:
+    def build_base_dir() -> str:
         home = os.getenv(HOME_DIR_ENV)
         Configuration._validate(home)
         path = os.getenv(COMMAND_REMINDER_DIR_ENV)
@@ -50,6 +52,10 @@ class Configuration:
     @property
     def main_repository_fish_functions(self) -> str:
         return os.path.join(self.main_repository_dir, FISH_FUNCTIONS_DIR_NAME)
+
+    @property
+    def config_file(self) -> str:
+        return os.path.join(self.base_dir, self.main_repository_dir, CONFIG_FILE_NAME)
 
     @property
     def fish_history_file(self) -> str:

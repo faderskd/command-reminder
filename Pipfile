@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 termcolor = "*"
 giturlparse = "*"
+pyyaml = "*"
 
 [dev-packages]
 giturlparse = "*"

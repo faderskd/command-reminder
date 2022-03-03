@@ -5,6 +5,8 @@ from abc import ABC, abstractmethod
 
 from termcolor import colored
 
+from command_reminder.common import FilesMixin
+
 
 def read_file_content(f) -> typing.Dict[str, typing.List[typing.List[str]]]:
     s = f.read()
@@ -18,20 +20,10 @@ def read_file_content(f) -> typing.Dict[str, typing.List[typing.List[str]]]:
 class OperationData: ...
 
 
-class Processor(ABC):
+class Processor(ABC, FilesMixin):
     @abstractmethod
     def process(self, operation: OperationData) -> None:
         pass
-
-    @staticmethod
-    def _create_dir(path: str) -> None:
-        if not os.path.exists(path):
-            os.makedirs(path)
-
-    @staticmethod
-    def _create_empty_file(path: str) -> None:
-        if not os.path.exists(path):
-            with open(path, 'w+'): ...
 
     @staticmethod
     def _print_colored(text):

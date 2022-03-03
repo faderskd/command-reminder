@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 from command_reminder.config.config import Configuration, FISH_FUNCTIONS_PATH_ENV, FISH_FUNCTIONS_DIR_NAME, \
     HISTORY_LOAD_FILE_NAME
+from command_reminder.config.peristent_repository_config import PersistentConfig
 from command_reminder.operations.base_processors import Processor, OperationData
 from command_reminder.operations.common.dict_viewer import DirectoriesViewer
 from command_reminder.operations.common.git import GitRepository
@@ -26,6 +27,7 @@ class InitRepositoryProcessor(Processor):
         self._create_dir(self._config.main_repository_fish_functions)
         self._init_git_repo(self._config.main_repository_dir, data.repo)
         self._create_empty_file(self._config.main_repository_commands_file)
+        self._create_empty_file(self._config.config_file)
         self._create_load_history_alias()
         self._generate_init_script()
 
@@ -34,7 +36,8 @@ class InitRepositoryProcessor(Processor):
             self._git_repo.validate(data.repo)
 
     def _init_git_repo(self, directory: str, repo: str) -> None:
-        self._git_repo.init_repo(directory, repo)
+        if repo:
+            self._git_repo.init_repo(directory, repo)
 
     def _generate_init_script(self) -> None:
         print(self._script_with_functions_dirs())

@@ -2,7 +2,7 @@ import os
 from unittest import mock
 from unittest.mock import call
 
-from command_reminder.operations.common.exceptions import InvalidArgumentException
+from command_reminder.exceptions import InvalidArgumentException
 
 from command_reminder.config.config import REPOSITORIES_DIR_NAME, MAIN_REPOSITORY_DIR_NAME
 

@@ -39,7 +39,7 @@ def parse_args(raw_args) -> None:
     elif operation == Operations.REMOVE:
         app_context.compound_processor.process(operation, RemoveCommandDto(command_name=args.command))
     elif operation == Operations.PULL:
-        app_context.compound_processor.process(operation, PullExternalRepositoryDto(repo=args.repo))
+        app_context.compound_processor.process(operation, PullExternalRepositoryDto(repo=args.repo, refresh_all=args.update_all))
     elif operation == Operations.PUSH:
         app_context.compound_processor.process(operation, None)
     else:
@@ -93,7 +93,9 @@ def _remove_subparser(parser: ArgumentParser) -> None:
 
 def _pull_subparser(parser: ArgumentParser) -> None:
     parser.add_argument('-r', '--repo', type=str,
-                        help='Pulls external commands repository.', required=True)
+                        help='Pulls external commands repository.', required=False)
+    parser.add_argument('-ua', '--update_all',
+                        help='Refreshes all external repositories,', action='store_true')
 
 
 if __name__ == '__main__':

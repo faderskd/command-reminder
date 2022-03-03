@@ -1,0 +1,6 @@
+{
+  "external_command": [
+    "some_internal_command",
+    ["#internal"]
+  ]
+}

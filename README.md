@@ -54,6 +54,7 @@ pip install .
         main/
             commands.txt
             fish/
+            dependencies.yaml            
         external/
             ext1/
                 commands.txt
@@ -62,3 +63,13 @@ pip install .
                 commands.txt
                 fish/
 ``` 
+
+#### Configuration file
+`config.yaml`
+
+```
+repositories:
+  external:
+    - url: ...
+    - url: ...
+```

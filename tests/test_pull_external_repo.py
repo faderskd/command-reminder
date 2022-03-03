@@ -1,4 +1,5 @@
 import os
+import shutil
 
 from command_reminder.cli import parser
 from command_reminder.config.config import REPOSITORIES_DIR_NAME, COMMANDS_FILE_NAME, FISH_FUNCTIONS_DIR_NAME, \
@@ -69,3 +70,20 @@ class PullExternalRepositoryTestCase(BaseTestCase):
             self.assertTrue(len(stdout.output), 2)
             self.assertOutputContains(stdout.output, '#internal')
             self.assertOutputContains(stdout.output, '#external')
+
+    def test_should_save_external_repo_to_config_and_pull_when_requested(self):
+        # given
+        parser.parse_args(['init'])
+        parser.parse_args(['pull', '--repo', 'https://github.com/faderskd/common-commands'])
+
+        shutil.rmtree(os.path.join(TEST_TMP_DIR_PATH, REPOSITORIES_DIR_NAME, EXTERNAL_REPOSITORIES_DIR_NAME))
+
+        parser.parse_args(['pull', '--update_all'])
+
+        with assert_stdout() as stdout:
+            # when
+            parser.parse_args(['list'])
+
+            # then
+            self.assertTrue(len(stdout.output), 1)
+            self.assertOutputContains(stdout.output, 'external_command: some_external_command')

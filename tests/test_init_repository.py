@@ -1,12 +1,11 @@
 import os
 from unittest import mock
 
-
 from command_reminder.cli import parser
 from command_reminder.config.config import COMMAND_REMINDER_DIR_ENV, HOME_DIR_ENV, REPOSITORIES_DIR_NAME, \
     MAIN_REPOSITORY_DIR_NAME, COMMANDS_FILE_NAME, FISH_FUNCTIONS_DIR_NAME, FISH_FUNCTIONS_PATH_ENV, \
-    HISTORY_LOAD_FILE_NAME
-from command_reminder.operations.common.exceptions import InvalidArgumentException
+    HISTORY_LOAD_FILE_NAME, CONFIG_FILE_NAME
+from command_reminder.exceptions import InvalidArgumentException
 from tests.common import BaseTestCase, assert_stdout
 from tests.helpers import with_mocked_environment, TEST_TMP_DIR_PATH
 
@@ -24,6 +23,8 @@ class InitTestCase(BaseTestCase):
         self.assertTrue(os.path.exists(
             f'/{TEST_TMP_DIR_PATH}/{REPOSITORIES_DIR_NAME}/{MAIN_REPOSITORY_DIR_NAME}/{COMMANDS_FILE_NAME}'))
         self.assertTrue(os.path.exists(os.path.join(TEST_TMP_DIR_PATH, REPOSITORIES_DIR_NAME, MAIN_REPOSITORY_DIR_NAME, ".git")))
+        self.assertTrue(os.path.exists(
+            f'/{TEST_TMP_DIR_PATH}/{REPOSITORIES_DIR_NAME}/{MAIN_REPOSITORY_DIR_NAME}/{CONFIG_FILE_NAME}'))
 
     def test_should_init_directory_without_github_repository_given(self):
         # when
