@@ -7,7 +7,7 @@ class DirectoriesViewer:
     def __init__(self, config: Configuration):
         self._config = config
 
-    def list_all_directories(self):
+    def list_all_repo_directories(self):
         results = [self._config.main_repository_dir]
         external_repos_directory = self._config.external_repositories_directory()
         if not os.path.exists(external_repos_directory):

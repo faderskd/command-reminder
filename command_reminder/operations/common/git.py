@@ -3,7 +3,7 @@ import subprocess
 from dataclasses import dataclass
 
 import giturlparse
-from command_reminder.config.config import FISH_FUNCTIONS_DIR_NAME, COMMANDS_FILE_NAME
+from command_reminder.config.config import FISH_FUNCTIONS_DIR_NAME, COMMANDS_FILE_NAME, CONFIG_FILE_NAME
 
 from command_reminder.exceptions import InvalidArgumentException
 
@@ -14,7 +14,7 @@ class ParsedGitRepository:
     name: str
 
 
-class GitRepository:
+class GitRepositoryManager:
     def init_repo(self, directory: str, repo: str) -> None:
         self.init_git(directory, repo)
         self.pull_changes_from_remote(directory)
@@ -39,13 +39,14 @@ class GitRepository:
                         f' git checkout main &&'
                         f' git add {FISH_FUNCTIONS_DIR_NAME}/* &&'
                         f' git add {COMMANDS_FILE_NAME} &&'
+                        f' git add {CONFIG_FILE_NAME} &&'
                         f' git commit -a -m \'update repo\' &&'
                         f' git push origin main'],
                        shell=True, check=True)
 
     @staticmethod
-    def validate(repo: str) -> ParsedGitRepository:
-        parsed = giturlparse.parse(repo)
+    def validate(repo_url: str) -> ParsedGitRepository:
+        parsed = giturlparse.parse(repo_url)
         if not parsed.valid:
             raise InvalidArgumentException("Invalid git repository url")
         return ParsedGitRepository(parsed.owner, parsed.name)

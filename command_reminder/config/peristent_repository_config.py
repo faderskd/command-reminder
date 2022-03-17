@@ -22,6 +22,14 @@ class PersistentConfig(FilesMixin):
             f.write(output)
             f.truncate()
 
+    def get_external_repositories(self):
+        with open(self._config.config_file, 'r') as f:
+            data = f.read()
+            parsed_data = yaml.safe_load(data)
+            if parsed_data:
+                return parsed_data['repositories']['external']
+        return []
+
     @staticmethod
     def _get_initial_config_content():
         return {

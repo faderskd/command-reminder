@@ -33,7 +33,7 @@ class ListCommandsProcessor(Processor):
 
     def _get_commands_from_repos(self, data: ListOperationDto) -> typing.List[FoundCommandDto]:
         results = []
-        for dir_path in self._dict_viewer.list_all_directories():
+        for dir_path in self._dict_viewer.list_all_repo_directories():
             if self._has_commands_file(dir_path):
                 with open(os.path.join(dir_path, COMMANDS_FILE_NAME), 'r') as f:
                     commands = read_file_content(f)

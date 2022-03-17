@@ -6,7 +6,7 @@ from command_reminder.config.config import Configuration, FISH_FUNCTIONS_PATH_EN
 from command_reminder.config.peristent_repository_config import PersistentConfig
 from command_reminder.operations.base_processors import Processor, OperationData
 from command_reminder.operations.common.dict_viewer import DirectoriesViewer
-from command_reminder.operations.common.git import GitRepository
+from command_reminder.operations.common.git import GitRepositoryManager
 
 
 @dataclass
@@ -15,10 +15,10 @@ class InitOperationDto(OperationData):
 
 
 class InitRepositoryProcessor(Processor):
-    def __init__(self, config: Configuration, git_repo: GitRepository):
+    def __init__(self, config: Configuration, git_repo: GitRepositoryManager, dir_viewer: DirectoriesViewer):
         self._config = config
         self._git_repo = git_repo
-        self._dir_viewer = DirectoriesViewer(config)
+        self._dir_viewer = dir_viewer
 
     def process(self, data: OperationData) -> None:
         if not isinstance(data, InitOperationDto):
@@ -49,7 +49,7 @@ class InitRepositoryProcessor(Processor):
 
     def _enhance_with_fish_directories_repos(self, script):
         enhanced_script = [script]
-        for dir_path in self._dir_viewer.list_all_directories():
+        for dir_path in self._dir_viewer.list_all_repo_directories():
             if self._contains_fish_dir(dir_path):
                 enhanced_script.append(os.path.join(dir_path, FISH_FUNCTIONS_DIR_NAME))
         return enhanced_script

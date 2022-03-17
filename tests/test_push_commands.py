@@ -13,7 +13,7 @@ from tests.helpers import with_mocked_environment, TEST_TMP_DIR_PATH
 
 @with_mocked_environment
 class PullExternalRepositoryTestCase(BaseTestCase):
-    @mock.patch('command_reminder.cli.initializer.GitRepository')
+    @mock.patch('command_reminder.cli.initializer.GitRepositoryManager')
     def test_should_push_command(self, git_mock):
         # given
         parser.parse_args(['init', '--repo', 'https://github.com/faderskd/common-commands'])

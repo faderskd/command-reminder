@@ -6,14 +6,14 @@ from command_reminder.operations.common.dict_viewer import DirectoriesViewer
 
 
 class TagsProcessor(Processor):
-    def __init__(self, config: Configuration):
+    def __init__(self, config: Configuration, dir_viewer: DirectoriesViewer):
         super().__init__()
         self._config = config
-        self._dict_viewer = DirectoriesViewer(config)
+        self._dict_viewer = dir_viewer
 
     def process(self, _: OperationData) -> None:
         all_tags = set()
-        for file_path in self._dict_viewer.list_all_directories():
+        for file_path in self._dict_viewer.list_all_repo_directories():
             if self._has_commands_file(file_path):
                 commands_file = os.path.join(file_path, COMMANDS_FILE_NAME)
                 with open(commands_file) as f:

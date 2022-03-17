@@ -2,7 +2,7 @@ import os
 import shutil
 from unittest import mock
 
-from command_reminder.operations.common.git import GitRepository
+from command_reminder.operations.common.git import GitRepositoryManager
 
 TEST_PATH = os.path.join(os.getcwd())
 TEST_TMP_DIR_PATH = os.path.join(os.getcwd(), 'tmp')
@@ -11,7 +11,7 @@ from command_reminder.config.config import COMMAND_REMINDER_DIR_ENV, FISH_FUNCTI
 
 
 def with_mocked_environment(cls):
-    GitRepository.pull_changes_from_remote = default_pull_changes_mock
+    GitRepositoryManager.pull_changes_from_remote = default_pull_changes_mock
     return mock.patch.dict('os.environ',
                            {COMMAND_REMINDER_DIR_ENV: TEST_TMP_DIR_PATH, FISH_FUNCTIONS_PATH_ENV: '/some/path',
                             HOME_DIR_ENV: TEST_TMP_DIR_PATH})(cls)
