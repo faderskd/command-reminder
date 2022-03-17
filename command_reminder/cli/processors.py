@@ -1,16 +1,17 @@
 import typing
 
-from command_reminder.operations.dto import OperationData
-from command_reminder.operations.processors import Processor
+from command_reminder.operations.base_processors import Processor, OperationData
 
 
 class Operations:
-    INIT = "init"
-    RECORD = "record"
-    LIST = "list"
-    LOAD = "load"
-    TAGS = "tags"
-    REMOVE = "rm"
+    INIT = 'init'
+    RECORD = 'record'
+    LIST = 'list'
+    LOAD = 'load'
+    TAGS = 'tags'
+    REMOVE = 'rm'
+    PULL = 'pull'
+    PUSH = 'push'
 
 
 class CompoundProcessor:

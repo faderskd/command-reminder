@@ -50,15 +50,26 @@ pip install .
 #### Repository structure
 ```
 ~/.command-reminder/
-    config
     repositories/
         main/
             commands.txt
             fish/
-        extensions/
+            dependencies.yaml            
+        external/
             ext1/
                 commands.txt
                 fish/
-            ext1/
-            ...
+            ext2/
+                commands.txt
+                fish/
 ``` 
+
+#### Configuration file
+`config.yaml`
+
+```
+repositories:
+  external:
+    - url: ...
+    - url: ...
+```
