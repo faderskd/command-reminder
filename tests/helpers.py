@@ -1,11 +1,13 @@
 import os
+import pathlib
 import shutil
 from unittest import mock
 
 from command_reminder.operations.common.git import GitRepositoryManager
 
-TEST_PATH = os.path.join(os.getcwd())
+TEST_PATH = pathlib.Path(__file__).parent.resolve()
 TEST_TMP_DIR_PATH = os.path.join(os.getcwd(), 'tmp')
+
 from command_reminder.config.config import COMMAND_REMINDER_DIR_ENV, FISH_FUNCTIONS_PATH_ENV, HOME_DIR_ENV, \
     COMMANDS_FILE_NAME, FISH_FUNCTIONS_DIR_NAME
 

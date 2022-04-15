@@ -3,7 +3,6 @@ from dataclasses import dataclass
 
 from command_reminder.config.config import Configuration, FISH_FUNCTIONS_PATH_ENV, FISH_FUNCTIONS_DIR_NAME, \
     HISTORY_LOAD_FILE_NAME
-from command_reminder.config.peristent_repository_config import PersistentConfig
 from command_reminder.operations.base_processors import Processor, OperationData
 from command_reminder.operations.common.dict_viewer import DirectoriesViewer
 from command_reminder.operations.common.git import GitRepositoryManager

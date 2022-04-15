@@ -25,6 +25,10 @@ setup(
     ],
     packages=find_packages(exclude=("tests",)),
     include_package_data=True,
-    install_requires=[],
+    install_requires=[
+        "pyyaml==6.0",
+        "giturlparse==0.10.0",
+        "termcolor==1.1.0"
+    ],
     scripts=["scripts/cr"]
 )

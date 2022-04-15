@@ -9,8 +9,8 @@ giturlparse = "*"
 pyyaml = "*"
 
 [dev-packages]
-giturlparse = "*"
 twine = "*"
+tox-pipenv = "*"
 
 [requires]
 python_version = "3.9"
