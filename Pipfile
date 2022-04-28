@@ -10,7 +10,7 @@ pyyaml = "*"
 
 [dev-packages]
 twine = "*"
-tox-pipenv = "*"
+pytest = "*"
 
 [requires]
 python_version = "3.9"
