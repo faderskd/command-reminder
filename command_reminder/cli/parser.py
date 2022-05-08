@@ -67,7 +67,7 @@ def define_parser():
 
 def _init_subparser(parser: ArgumentParser) -> None:
     parser.add_argument('-r', '--repo', type=str, default='',
-                        help=f'Repository to which save commands. If empty default "~/{DEFAULT_REPOSITORY_DIR}" will be used')
+                        help=f'Repository to which save commands. If empty, default "~/{DEFAULT_REPOSITORY_DIR}" will be used')
 
 
 def _record_subparser(parser: ArgumentParser) -> None:
