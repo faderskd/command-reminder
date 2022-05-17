@@ -11,6 +11,7 @@ pyyaml = "*"
 [dev-packages]
 twine = "*"
 pytest = "*"
+tox = "*"
 
 [requires]
 python_version = "3.9"

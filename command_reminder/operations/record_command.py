@@ -4,7 +4,8 @@ import typing
 from dataclasses import dataclass
 
 from command_reminder.config.config import Configuration
-from command_reminder.operations.base_processors import Processor, read_file_content, OperationData
+from command_reminder.operations.base_processor import Processor, OperationData
+from command_reminder.operations.helpers.files import read_file_content
 
 
 @dataclass

@@ -3,7 +3,7 @@ import pathlib
 import shutil
 from unittest import mock
 
-from command_reminder.operations.common.git import GitRepositoryManager
+from command_reminder.operations.helpers.git import GitRepositoryManager
 
 TEST_PATH = pathlib.Path(__file__).parent.resolve()
 TEST_TMP_DIR_PATH = os.path.join(os.getcwd(), 'tmp')

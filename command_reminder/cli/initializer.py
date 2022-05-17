@@ -2,8 +2,8 @@ from command_reminder.cli.parser import Operations
 from command_reminder.cli.processors import CompoundProcessor
 from command_reminder.config.config import Configuration
 from command_reminder.config.peristent_repository_config import PersistentConfig
-from command_reminder.operations.common.dict_viewer import DirectoriesViewer
-from command_reminder.operations.common.git import GitRepositoryManager
+from command_reminder.operations.helpers.dir_viewer import DirectoriesViewer
+from command_reminder.operations.helpers.git import GitRepositoryManager
 from command_reminder.operations.init_repository import InitRepositoryProcessor
 from command_reminder.operations.list_commands import ListCommandsProcessor
 from command_reminder.operations.list_tags import TagsProcessor
