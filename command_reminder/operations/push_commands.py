@@ -1,9 +1,9 @@
 from command_reminder.exceptions import InvalidArgumentException
 
-from command_reminder.operations.base_processors import Processor, OperationData
+from command_reminder.operations.base_processor import Processor, OperationData
 
 from command_reminder.config.config import Configuration
-from command_reminder.operations.common.git import GitRepositoryManager
+from command_reminder.operations.helpers.git import GitRepositoryManager
 
 
 class PushCommandsToRepo(Processor):

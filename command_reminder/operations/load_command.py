@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from command_reminder import common
 
 from command_reminder.config.config import Configuration
-from command_reminder.operations.base_processors import Processor, OperationData
+from command_reminder.operations.base_processor import Processor, OperationData
 
 
 @dataclass

@@ -3,8 +3,8 @@ from dataclasses import dataclass
 
 from command_reminder.config.config import Configuration
 from command_reminder.exceptions import InvalidArgumentException
-from command_reminder.operations.base_processors import Processor, OperationData
-from command_reminder.operations.common.git import GitRepositoryManager, ParsedGitRepository
+from command_reminder.operations.base_processor import Processor, OperationData
+from command_reminder.operations.helpers.git import GitRepositoryManager, ParsedGitRepository
 from command_reminder.config.peristent_repository_config import PersistentConfig
 
 
